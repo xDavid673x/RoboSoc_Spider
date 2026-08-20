@@ -168,11 +168,11 @@ def test_webots_mount_compensation_and_gait_rate_match_the_body_frame():
     assert spider.gait.anti_beta_dict == pytest.approx(
         {
             "legi": 0.0,
-            "legj": math.pi / 4.0,
-            "legk": 3.0 * math.pi / 4.0,
-            "legl": math.pi,
-            "legm": -3.0 * math.pi / 4.0,
-            "legn": -math.pi / 4.0,
+            "legj": math.pi / 3.0,
+            "legk": 2.0 * math.pi / 3.0,
+            "legl": -math.pi,
+            "legm": -2.0 * math.pi / 3.0,
+            "legn": -math.pi / 3.0,
         }
     )
     assert WEBOTS_GAIT_COMPENSATION_RAD == spider.gait.anti_beta_dict
