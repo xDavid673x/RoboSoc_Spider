@@ -8,6 +8,7 @@ where Webots expects metres and radians.
 from __future__ import annotations
 
 import math
+import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,27 +30,6 @@ TRIPOD_A = frozenset(("legi", "legk", "legm"))
 TRIPOD_B = frozenset(("legj", "legl", "legn"))
 TRIPODS = (TRIPOD_A, TRIPOD_B)
 
-LEG_MOUNT_MM: dict[str, tuple[float, float, float]] = {
-    "legi": (50.0, 0.0, 0.0),
-    "legj": (50.0, 40.0, 0.0),
-    "legk": (-50.0, 40.0, 0.0),
-    "legl": (-50.0, 0.0, 0.0),
-    "legm": (-50.0, -40.0, 0.0),
-    "legn": (50.0, -40.0, 0.0),
-}
-
-# ``Tripot_gait``'s simulation branch assumes its matplotlib body frame.  The
-# Webots PROTO applies its own reflected Y-up mount rotations, so these inverse
-# mount angles keep every stance-foot stride parallel in the Webots body frame.
-WEBOTS_GAIT_COMPENSATION_RAD: dict[str, float] = {
-    "legi": 0.0,
-    "legj": math.pi / 4.0,
-    "legk": 3.0 * math.pi / 4.0,
-    "legl": math.pi,
-    "legm": -3.0 * math.pi / 4.0,
-    "legn": -math.pi / 4.0,
-}
-
 JOINT_LIMITS_DEG: tuple[tuple[float, float], ...] = (
     (-90.0, 90.0),
     (-90.0, 90.0),
@@ -58,10 +38,72 @@ JOINT_LIMITS_DEG: tuple[tuple[float, float], ...] = (
 
 DEFAULT_LEG_LENGTHS_MM = (43.8, 88.0, 166.0)
 INIT_ANGLES_DEG = (0.0, 28.0, 115.0)
+CAD_MANIFEST = REPO_ROOT / "webots" / "cad" / "spider_geometry.v1.json"
 MM_TO_M = 0.001
 MAX_WALK_SPEED = 0.7
 GAIT_STEP_MIN = 20
 GAIT_STEP_MAX = 48
+
+
+def _fallback_leg_lengths() -> dict[str, tuple[float, float, float]]:
+    return {name: DEFAULT_LEG_LENGTHS_MM for name in LEG_NAMES}
+
+
+def _fallback_gait_compensation() -> dict[str, float]:
+    return {
+        "legi": 0.0,
+        "legj": math.pi / 4.0,
+        "legk": 3.0 * math.pi / 4.0,
+        "legl": math.pi,
+        "legm": -3.0 * math.pi / 4.0,
+        "legn": -math.pi / 4.0,
+    }
+
+
+def load_cad_manifest(path: Path = CAD_MANIFEST) -> dict[str, Any] | None:
+    """Load the committed CAD manifest when available.
+
+    Webots launches controllers from inside the controller directory, so the
+    path is resolved from this file instead of the process working directory.
+    Unit tests can still import the adapter before a CAD snapshot exists.
+    """
+
+    try:
+        manifest = json.loads(path.read_text(encoding="ascii"))
+    except FileNotFoundError:
+        return None
+    if manifest.get("schema_version") != 1:
+        raise ValueError(f"unsupported spider CAD manifest schema: {path}")
+    return manifest
+
+
+def _cad_leg_lengths() -> dict[str, tuple[float, float, float]]:
+    manifest = load_cad_manifest()
+    if manifest is None:
+        return _fallback_leg_lengths()
+    lengths: dict[str, tuple[float, float, float]] = {}
+    for leg in manifest["legs"]:
+        values = leg["lengths_mm"]
+        lengths[leg["name"]] = (
+            float(values["coxa"]),
+            float(values["femur"]),
+            float(values["tibia"]),
+        )
+    return lengths
+
+
+def _cad_gait_compensation() -> dict[str, float]:
+    manifest = load_cad_manifest()
+    if manifest is None:
+        return _fallback_gait_compensation()
+    return {
+        leg["name"]: float(leg["gait_compensation_rad"])
+        for leg in manifest["legs"]
+    }
+
+
+CAD_LEG_LENGTHS_MM = _cad_leg_lengths()
+WEBOTS_GAIT_COMPENSATION_RAD = _cad_gait_compensation()
 
 
 def mm_to_m(value_mm: float) -> float:
@@ -151,12 +193,25 @@ class Command:
 class VirtualSpider:
     """Pure-python gait state used by the Webots controller and unit tests."""
 
-    def __init__(self, leg_lengths_mm: Iterable[float] = DEFAULT_LEG_LENGTHS_MM):
-        lengths = tuple(float(value) for value in leg_lengths_mm)
-        if len(lengths) != 3 or any(value <= 0 for value in lengths):
-            raise ValueError("leg_lengths_mm must contain three positive values")
+    def __init__(
+        self,
+        leg_lengths_mm: Iterable[float] | Mapping[str, Iterable[float]] | None = None,
+    ):
+        if leg_lengths_mm is None:
+            per_leg_lengths = CAD_LEG_LENGTHS_MM
+        elif isinstance(leg_lengths_mm, Mapping):
+            per_leg_lengths = {
+                name: tuple(float(value) for value in leg_lengths_mm[name])
+                for name in LEG_NAMES
+            }
+        else:
+            lengths = tuple(float(value) for value in leg_lengths_mm)
+            per_leg_lengths = {name: lengths for name in LEG_NAMES}
+        for name, lengths in per_leg_lengths.items():
+            if len(lengths) != 3 or any(value <= 0 for value in lengths):
+                raise ValueError(f"{name} leg_lengths_mm must contain three positive values")
         self.legs = {
-            name: SpiderLeg(name, *lengths)
+            name: SpiderLeg(name, *per_leg_lengths[name])
             for name in LEG_NAMES
         }
         self.gait = Tripot_gait(use_hardware_batch=False)

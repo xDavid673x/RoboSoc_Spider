@@ -18,7 +18,7 @@ WorldInfo {
 Viewpoint {
   position 0.8 0.48 0.8
   orientation -0.377400 0.697553 0.609089 2.816821
-  description "30 degree slope validation world"
+  description "Spider validation world 30 deg"
   follow "spider_slope_30"
   followType "Tracking Shot"
   followSmoothness 0.15
@@ -31,4 +31,4 @@ DirectionalLight {
   castShadows TRUE
 }
 SlopeTerrain { angle 30 }
-Spider { name "spider_slope_30" translation -0.091500000 0.108482649 0 rotation 0 0 1 0.523598776 }
+Spider { name "spider_slope_30" translation 0 0.037775444 0.050677176 rotation 0 1 0 0 }

@@ -17,7 +17,7 @@ WorldInfo {
 Viewpoint {
   position 0.8 0.48 0.8
   orientation -0.377400 0.697553 0.609089 2.816821
-  description "Flat spider validation world"
+  description "Spider validation world 0 deg"
   follow "spider_flat"
   followType "Tracking Shot"
   followSmoothness 0.15
@@ -41,4 +41,4 @@ Solid {
   boundingObject Box { size 4 0.1 4 }
   physics NULL
 }
-Spider { name "spider_flat" }
+Spider { name "spider_flat" translation 0 0.051354353 0 rotation 0 1 0 0 }
