@@ -25,12 +25,12 @@ EXPECTED_DOCUMENT_NAME = "Spider"
 EXPECTED_LINEAGE = "zyUEBEY-SrODxrte3NrQMw"
 ARCHIVE_SHA256 = "63475fde834256bd3cb79ffbde11c24fb34a39b3abd0d019993e2314a8f25491"
 LEG_OCCURRENCES = {
-    "legAssemble:1": "legi",
     "legAssemble:2": "legj",
     "legAssemble:3": "legn",
     "legAssemble:4": "legl",
     "legAssemble:5": "legk",
     "legAssemble:6": "legm",
+    "legAssemble:7": "legi",
 }
 BODY_OCCURRENCE = "Hex base-smaller:1"
 

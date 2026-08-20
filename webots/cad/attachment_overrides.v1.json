@@ -8,7 +8,7 @@
     "evidence": "All 18 joint roles, canonical signs, visual coverage, contradictory rigid-group exclusion, and ambiguous servo adapter ownership were checked against fusion_snapshot.v1.json."
   },
   "leg_occurrences": {
-    "legi": "legAssemble:1",
+    "legi": "legAssemble:7",
     "legj": "legAssemble:2",
     "legn": "legAssemble:3",
     "legl": "legAssemble:4",
@@ -17,9 +17,9 @@
   },
   "joint_roles": {
     "legi": {
-      "coxa": {"assembly_context": "legAssemble:1", "joint_name": "Revolute 2", "occurrence_one": "legAssemble:1+Final leg base:1", "occurrence_two": "legAssemble:1+SERVO RSD3230:1+ara:1"},
-      "femur": {"assembly_context": "legAssemble:1", "joint_name": "Revolute 6", "occurrence_one": "legAssemble:1+Final mid leg:1", "occurrence_two": "legAssemble:1+SERVO RSD3230:2+RSD3230 govde:1"},
-      "tibia": {"assembly_context": "legAssemble:1", "joint_name": "Revolute 5", "occurrence_one": "legAssemble:1+SERVO RSD3230:3+RSD3230 govde:1", "occurrence_two": "legAssemble:1+Final mid leg:1"}
+      "coxa": {"assembly_context": "legAssemble:7", "joint_name": "Revolute 2", "occurrence_one": "legAssemble:7+Final leg base:1", "occurrence_two": "legAssemble:7+SERVO RSD3230:1+ara:1"},
+      "femur": {"assembly_context": "legAssemble:7", "joint_name": "Revolute 6", "occurrence_one": "legAssemble:7+Final mid leg:1", "occurrence_two": "legAssemble:7+SERVO RSD3230:2+RSD3230 govde:1"},
+      "tibia": {"assembly_context": "legAssemble:7", "joint_name": "Revolute 5", "occurrence_one": "legAssemble:7+SERVO RSD3230:3+RSD3230 govde:1", "occurrence_two": "legAssemble:7+Final mid leg:1"}
     },
     "legj": {
       "coxa": {"assembly_context": "legAssemble:2", "joint_name": "Revolute 2", "occurrence_one": "legAssemble:2+Final leg base:1", "occurrence_two": "legAssemble:2+SERVO RSD3230:1+ara:1"},
@@ -49,10 +49,10 @@
   },
   "rigid_group_assignments": {
     "legi": {
-      "mount": ["legAssemble:1+SERVO RSD3230:1+RSD3230 govde:1", "legAssemble:1+SERVO RSD3230:1+Servo_support_bracket:1", "legAssemble:1+SERVO RSD3230:1+ara:1"],
-      "coxa": ["legAssemble:1+Final leg base:1", "legAssemble:1+SERVO RSD3230:2+RSD3230 govde:1", "legAssemble:1+SERVO RSD3230:2+Servo_support_bracket:1", "legAssemble:1+SERVO RSD3230:2+ara:1"],
-      "femur": ["legAssemble:1+Final mid leg:1", "legAssemble:1+SERVO RSD3230:3+ara:1"],
-      "tibia": ["legAssemble:1+Final_leg_tip:1", "legAssemble:1+SERVO RSD3230:3+RSD3230 govde:1", "legAssemble:1+SERVO RSD3230:3+Servo_support_bracket:1"]
+      "mount": ["legAssemble:7+SERVO RSD3230:1+RSD3230 govde:1", "legAssemble:7+SERVO RSD3230:1+Servo_support_bracket:1", "legAssemble:7+SERVO RSD3230:1+ara:1"],
+      "coxa": ["legAssemble:7+Final leg base:1", "legAssemble:7+SERVO RSD3230:2+RSD3230 govde:1", "legAssemble:7+SERVO RSD3230:2+Servo_support_bracket:1", "legAssemble:7+SERVO RSD3230:2+ara:1"],
+      "femur": ["legAssemble:7+Final mid leg:1", "legAssemble:7+SERVO RSD3230:3+ara:1"],
+      "tibia": ["legAssemble:7+Final_leg_tip:1", "legAssemble:7+SERVO RSD3230:3+RSD3230 govde:1", "legAssemble:7+SERVO RSD3230:3+Servo_support_bracket:1"]
     },
     "legj": {
       "mount": ["legAssemble:2+SERVO RSD3230:1+RSD3230 govde:1", "legAssemble:2+SERVO RSD3230:1+Servo_support_bracket:1", "legAssemble:2+SERVO RSD3230:1+ara:1"],
@@ -86,7 +86,7 @@
     }
   },
   "fixed_mounts": {
-    "legi": "legAssemble:1+SERVO RSD3230:1",
+    "legi": "legAssemble:7+SERVO RSD3230:1",
     "legj": "legAssemble:2+SERVO RSD3230:1",
     "legn": "legAssemble:3+SERVO RSD3230:1",
     "legl": "legAssemble:4+SERVO RSD3230:1",
@@ -102,7 +102,7 @@
   ],
   "axis_signs": {"coxa": -1, "femur": 1, "tibia": -1},
   "foot_contacts": {
-    "legi": {"visual_occurrence": "legAssemble:1+Final_leg_tip:1", "selector": "lowest_distal_vertex_set"},
+    "legi": {"visual_occurrence": "legAssemble:7+Final_leg_tip:1", "selector": "lowest_distal_vertex_set"},
     "legj": {"visual_occurrence": "legAssemble:2+Final_leg_tip:1", "selector": "lowest_distal_vertex_set"},
     "legn": {"visual_occurrence": "legAssemble:3+Final_leg_tip:1", "selector": "lowest_distal_vertex_set"},
     "legl": {"visual_occurrence": "legAssemble:4+Final_leg_tip:1", "selector": "lowest_distal_vertex_set"},

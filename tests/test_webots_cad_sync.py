@@ -42,12 +42,12 @@ def _snapshot(tmp_path: Path) -> tuple[Path, dict]:
     metadata = cad_sync._mesh_metadata(mesh)
     occurrence_paths = [
         "Hex base-smaller:1",
-        "legAssemble:1",
         "legAssemble:2",
         "legAssemble:3",
         "legAssemble:4",
         "legAssemble:5",
         "legAssemble:6",
+        "legAssemble:7",
     ]
     identity = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
     snapshot = {
@@ -128,7 +128,7 @@ def test_snapshot_validator_accepts_a_complete_checked_export(tmp_path):
 
 def test_snapshot_validator_rejects_wrong_leg_mapping(tmp_path):
     path, snapshot = _snapshot(tmp_path)
-    snapshot["mapping"]["legs"]["legAssemble:1"] = "legj"
+    snapshot["mapping"]["legs"]["legAssemble:7"] = "legj"
     path.write_text(json.dumps(snapshot), encoding="ascii")
 
     with pytest.raises(cad_sync.ValidationError, match="leg mapping"):

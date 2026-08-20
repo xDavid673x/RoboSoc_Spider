@@ -27,12 +27,12 @@ OVERRIDES_PATH = ROOT / "webots/cad/attachment_overrides.v1.json"
 EXPECTED_LINEAGE = "zyUEBEY-SrODxrte3NrQMw"
 EXPECTED_ARCHIVE_SHA256 = "63475fde834256bd3cb79ffbde11c24fb34a39b3abd0d019993e2314a8f25491"
 EXPECTED_LEG_MAPPING = {
-    "legAssemble:1": "legi",
     "legAssemble:2": "legj",
     "legAssemble:3": "legn",
     "legAssemble:4": "legl",
     "legAssemble:5": "legk",
     "legAssemble:6": "legm",
+    "legAssemble:7": "legi",
 }
 LEG_ORDER = ("legi", "legj", "legk", "legl", "legm", "legn")
 JOINT_ORDER = ("coxa", "femur", "tibia")
