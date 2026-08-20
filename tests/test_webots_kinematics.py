@@ -10,6 +10,7 @@ from webots.controllers.spider_controller.kinematics_adapter import (
     INIT_ANGLES_DEG,
     JOINT_LIMITS_DEG,
     LEG_NAMES,
+    MAX_WALK_SPEED,
     TRIPOD_A,
     TRIPOD_B,
     WEBOTS_GAIT_COMPENSATION_RAD,
@@ -31,6 +32,25 @@ def test_length_and_angle_conversions_preserve_boundary_units():
     assert body_mount_to_webots((50.0, -40.0, 0.0)) == pytest.approx(
         (0.05, -0.04, 0.0)
     )
+
+
+@pytest.mark.parametrize(
+    "pose_deg",
+    (
+        (0.0, 28.0, 115.0),
+        (20.0, -10.0, 80.0),
+        (-35.0, 45.0, 120.0),
+    ),
+)
+def test_reachable_inverse_and_forward_kinematics_round_trip(pose_deg):
+    leg = VirtualSpider().legs["legi"]
+    leg.set_angles(list(pose_deg))
+    target_mm = list(leg.forwardKinematics()[3])
+
+    inverse_angles_deg = leg.calculate_inverse_angles(target_mm)
+    leg.set_angles(inverse_angles_deg)
+
+    assert leg.forwardKinematics()[3] == pytest.approx(target_mm, abs=1e-9)
 
 
 def test_joint_angle_conversion_clamps_each_command_to_mechanical_limits():
@@ -78,6 +98,30 @@ def test_tripod_constants_partition_all_six_leg_names():
     assert TRIPOD_A | TRIPOD_B == set(LEG_NAMES)
     assert TRIPOD_A == {"legi", "legk", "legm"}
     assert TRIPOD_B == {"legj", "legl", "legn"}
+
+
+def test_walk_and_turn_gaits_alternate_tripods_each_phase():
+    walk_spider = VirtualSpider()
+    walk_phase_steps = gait_step_for_speed(MAX_WALK_SPEED) + 1
+    assert walk_spider.gait.tripods[walk_spider.gait.walk_tripod_idx] == TRIPOD_A
+
+    for _ in range(walk_phase_steps):
+        walk_spider.command({"mode": "walk", "vx": 1.0, "speed": 1.0})
+    assert walk_spider.gait.tripods[walk_spider.gait.walk_tripod_idx] == TRIPOD_B
+
+    for _ in range(walk_phase_steps):
+        walk_spider.command({"mode": "walk", "vx": 1.0, "speed": 1.0})
+    assert walk_spider.gait.tripods[walk_spider.gait.walk_tripod_idx] == TRIPOD_A
+
+    turn_spider = VirtualSpider()
+    turn_phase_steps = gait_step_for_speed(1.0) + 1
+    for _ in range(turn_phase_steps):
+        turn_spider.command({"mode": "turn", "turn": 1.0, "speed": 1.0})
+    assert turn_spider.gait.tripods[turn_spider.gait.turn_tripod_idx] == TRIPOD_B
+
+    for _ in range(turn_phase_steps):
+        turn_spider.command({"mode": "turn", "turn": 1.0, "speed": 1.0})
+    assert turn_spider.gait.tripods[turn_spider.gait.turn_tripod_idx] == TRIPOD_A
 
 
 def test_webots_mount_compensation_and_gait_rate_match_the_body_frame():
