@@ -182,12 +182,16 @@ class SpiderController:
         """Reset physics, body pose, gait phases, and all joint commands."""
 
         self.spider.reset()
-        self._reset_body()
-        self._reset_joint_positions()
-        self._apply_joint_angles()
+        # Clear old dynamic state before applying the pose.  On Webots builds
+        # that restore joint state during a global physics reset, doing this
+        # afterward would leave the CAD zero rotation visible while sensors
+        # report the requested motor targets.
         simulation_reset = getattr(self.supervisor, "simulationResetPhysics", None)
         if simulation_reset:
             simulation_reset()
+        self._reset_body()
+        self._reset_joint_positions()
+        self._apply_joint_angles()
 
     def _apply_joint_angles(self) -> None:
         angles = self.spider.joint_angles_rad()
@@ -418,6 +422,32 @@ class SpiderController:
         if simulation_quit:
             simulation_quit(0)
 
+    def run_attachment_smoke(self, result_path: str | None = None) -> None:
+        """Report all articulated endpoint frames immediately after reset."""
+
+        self.reset()
+        endpoints: dict[str, dict[str, list[float]]] = {}
+        for key, joint in self.joints.items():
+            endpoint_field = joint.getField("endPoint") if joint is not None else None
+            endpoint = endpoint_field.getSFNode() if endpoint_field is not None else None
+            endpoints[key] = {
+                "position_m": (
+                    []
+                    if endpoint is None
+                    else [float(value) for value in endpoint.getPosition()]
+                ),
+                "orientation": (
+                    []
+                    if endpoint is None
+                    else [float(value) for value in endpoint.getOrientation()]
+                ),
+            }
+        result = {"endpoints": endpoints}
+        self._write_smoke_result(result, result_path)
+        simulation_quit = getattr(self.supervisor, "simulationQuit", None)
+        if simulation_quit:
+            simulation_quit(0)
+
 
 def main() -> None:
     controller = SpiderController()
@@ -426,6 +456,8 @@ def main() -> None:
     if custom_data.startswith("smoke-motion-"):
         mode, result_path = custom_data.split(":", 1)
         controller.run_motion_smoke(mode.removeprefix("smoke-motion-"), result_path)
+    elif custom_data.startswith("attachment:"):
+        controller.run_attachment_smoke(custom_data.removeprefix("attachment:"))
     elif custom_data.startswith("smoke:"):
         controller.run_smoke(custom_data.removeprefix("smoke:"))
     else:

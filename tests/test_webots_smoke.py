@@ -12,6 +12,10 @@ import tempfile
 
 import pytest
 
+from tools import cad_sync
+from webots.controllers.spider_controller.kinematics_adapter import LEG_NAMES
+from webots.controllers.spider_controller.spider_controller import JOINT_NAMES
+
 
 ROOT = Path(__file__).resolve().parents[1]
 WEBOTS = Path("/Applications/Webots.app/Contents/MacOS/webots")
@@ -26,6 +30,50 @@ WORLD_POSES = {
     name: (pose["initial_translation_m"], pose["initial_rotation"])
     for name, pose in MANIFEST["world"]["poses"].items()
 }
+
+
+def _world_from_robot(world_name: str) -> list[list[float]]:
+    translation, rotation = WORLD_POSES[world_name]
+    return cad_sync._matmul(
+        cad_sync._translation_matrix(translation),
+        cad_sync._rotation_about_axis(rotation[:3], rotation[3]),
+    )
+
+
+def _endpoint_matrix(sample: dict[str, list[float]]) -> list[list[float]]:
+    position = sample["position_m"]
+    orientation = sample["orientation"]
+    assert len(position) == 3
+    assert len(orientation) == 9
+    return [
+        [orientation[row * 3 + column] for column in range(3)] + [position[row]]
+        for row in range(3)
+    ] + [[0.0, 0.0, 0.0, 1.0]]
+
+
+def _meters_transform(matrix_mm: list[list[float]]) -> list[list[float]]:
+    converted = [row.copy() for row in matrix_mm]
+    for row in range(3):
+        converted[row][3] *= 0.001
+    return converted
+
+
+def _expected_reset_endpoints(world_name: str) -> dict[str, list[list[float]]]:
+    world_from_robot = _world_from_robot(world_name)
+    expected = {}
+    for leg in MANIFEST["legs"]:
+        parent = cad_sync._matrix_from_flat(leg["leg_to_body_transform_mm"])
+        joints = {joint["role"]: joint for joint in leg["joints"]}
+        for role in JOINT_NAMES:
+            parent = cad_sync._matmul(
+                parent,
+                cad_sync._reset_endpoint_transform(joints[role]),
+            )
+            expected[f"{leg['name']}_{role}"] = cad_sync._matmul(
+                world_from_robot,
+                _meters_transform(parent),
+            )
+    return expected
 
 
 def _run_world(
@@ -89,6 +137,34 @@ def _run_world(
         Path(result_file.name).unlink(missing_ok=True)
     assert encoded_result, output
     return output, json.loads(encoded_result)
+
+
+@pytest.mark.skipif(not WEBOTS.exists(), reason="Webots R2025a is not installed")
+@pytest.mark.parametrize("world", WORLDS, ids=lambda path: path.stem)
+def test_reset_endpoint_frames_match_fusion_manifest(world):
+    _, result = _run_world(world, smoke_mode="attachment")
+    expected = _expected_reset_endpoints(world.stem)
+    expected_names = {
+        f"{leg}_{joint}"
+        for leg in LEG_NAMES
+        for joint in JOINT_NAMES
+    }
+
+    assert set(result["endpoints"]) == expected_names == set(expected)
+    for name, expected_transform in expected.items():
+        actual_transform = _endpoint_matrix(result["endpoints"][name])
+        translation_error_m, rotation_error_deg = cad_sync._attachment_error(
+            expected_transform,
+            actual_transform,
+        )
+        assert translation_error_m <= 1e-5, (
+            f"{world.stem} {name} differs from Fusion by "
+            f"{translation_error_m * 1000:.6f} mm"
+        )
+        assert rotation_error_deg <= 0.01, (
+            f"{world.stem} {name} differs from Fusion by "
+            f"{rotation_error_deg:.6f} deg"
+        )
 
 
 @pytest.mark.skipif(not WEBOTS.exists(), reason="Webots R2025a is not installed")

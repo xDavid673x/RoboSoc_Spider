@@ -146,6 +146,25 @@ def test_reset_restores_body_physics_and_joint_pose():
     )
 
 
+def test_reset_clears_physics_before_restoring_joint_pose():
+    supervisor = FakeSupervisor()
+    controller = SpiderController(supervisor)
+    events = []
+
+    supervisor.simulationResetPhysics = lambda: events.append("simulation_reset")
+    supervisor.body.resetPhysics = lambda: events.append("body_reset")
+    for joint in supervisor.joints.values():
+        joint.setJointPosition = lambda _position: events.append("joint_pose")
+    for motor in supervisor.devices.values():
+        motor.setPosition = lambda _position: events.append("motor_target")
+
+    controller.reset()
+
+    assert events[0] == "simulation_reset"
+    assert events.index("body_reset") < events.index("joint_pose")
+    assert events.index("joint_pose") < events.index("motor_target")
+
+
 def test_reset_restores_the_body_pose_configured_by_the_world():
     translation = [-0.062589686, 0.121963750, 0.0]
     rotation = [0.0, 0.0, 1.0, 0.349065850]
