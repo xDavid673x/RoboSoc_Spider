@@ -1,5 +1,11 @@
 # Hexapod Web Control Quick Start
 
+## Webots Simulator
+
+The standalone six-leg Webots R2025a project, keyboard controls, slope worlds,
+provisional dynamics, and verification instructions are documented in
+[`webots/README.md`](webots/README.md).
+
 Shared UI source (used by both internet and LAN modes):
 - `shared_ui/index.html`
 - `shared_ui/styles.css`
