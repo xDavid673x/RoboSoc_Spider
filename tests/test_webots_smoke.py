@@ -21,6 +21,21 @@ WORLDS = (
     ROOT / "webots/worlds/slope_20.wbt",
     ROOT / "webots/worlds/slope_30.wbt",
 )
+WORLD_POSES = {
+    "flat": ([0.0, 0.133, 0.0], [0.0, 0.0, 1.0, 0.0]),
+    "slope_10": (
+        [-0.031777617, 0.130219819, 0.0],
+        [0.0, 0.0, 1.0, 0.174532925],
+    ),
+    "slope_20": (
+        [-0.062589686, 0.121963750, 0.0],
+        [0.0, 0.0, 1.0, 0.349065850],
+    ),
+    "slope_30": (
+        [-0.091500000, 0.108482649, 0.0],
+        [0.0, 0.0, 1.0, 0.523598776],
+    ),
+}
 
 
 def _run_world(
@@ -92,11 +107,29 @@ def test_all_worlds_load_with_all_devices_and_command_directions():
     for index, world in enumerate(WORLDS):
         text, result = _run_world(world, 1300 + index)
         results.append(result)
+        expected_translation, expected_rotation = WORLD_POSES[world.stem]
         assert result["devices"] == 18
         assert result["sensors"] == 18
         assert result["missing_motors"] == []
         assert result["missing_sensors"] == []
         assert result["body_position_m"][1] > 0.02
+        assert result["configured_body_translation_m"] == pytest.approx(
+            expected_translation, abs=1e-9
+        )
+        assert result["configured_body_rotation"] == pytest.approx(
+            expected_rotation, abs=1e-9
+        )
+        assert result["initial_body_position_m"] == pytest.approx(
+            expected_translation, abs=1e-9
+        )
+        assert result["first_step_displacement_m"] < 0.01
+        assert result["settling_displacement_m"] < 0.02
+        assert result["reset_body_translation_m"] == pytest.approx(
+            expected_translation, abs=1e-9
+        )
+        assert result["reset_body_rotation"] == pytest.approx(
+            expected_rotation, abs=1e-9
+        )
         assert all(
             angles == pytest.approx([0.0, 28.0, 115.0], abs=0.1)
             for angles in result["sensor_angles_deg"].values()
@@ -122,6 +155,17 @@ def test_slope_world_declares_requested_angle(angle):
     assert 'coordinateSystem "NUE"' in contents
     assert "basicTimeStep 20" in contents
     assert f"SlopeTerrain {{ angle {angle} }}" in contents
+    expected_translation, expected_rotation = WORLD_POSES[f"slope_{angle}"]
+    pose_match = re.search(
+        r"Spider \{ name \"[^\"]+\" translation "
+        r"(\S+) (\S+) (\S+) rotation (\S+) (\S+) (\S+) (\S+) \}",
+        contents,
+    )
+    assert pose_match is not None
+    pose_values = [float(value) for value in pose_match.groups()]
+    assert pose_values == pytest.approx(
+        expected_translation + expected_rotation, abs=1e-9
+    )
 
 
 @pytest.mark.skipif(not WEBOTS.exists(), reason="Webots R2025a is not installed")

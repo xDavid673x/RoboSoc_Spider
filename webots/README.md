@@ -81,8 +81,13 @@ python3 -m pytest -q \
 ```
 
 The native smoke suite starts Webots in batch/fast mode. It loads all four
-worlds, resolves all 18 motors and sensors, and checks flat-ground stand,
+worlds, resolves all 18 motors and sensors, checks each world's first physics
+step and configured reset transform, and checks flat-ground stand,
 forward/backward displacement, left/right yaw, stop drift, and reset state.
+
+Each slope world rotates and translates the initial robot pose with the terrain.
+`R` restores that world-specific pose, while the joint reset remains
+`[0, 28, 115]` degrees in every world.
 
 ## Calibration Limits
 
@@ -97,4 +102,3 @@ forward/backward displacement, left/right yaw, stop drift, and reset state.
   production tuning should use measured link inertia rather than dense meshes.
 - Turn rate and absolute walking speed are simulation outputs, not predictions
   of the physical robot, until measured actuator and contact data are supplied.
-

@@ -10,8 +10,14 @@ from webots.controllers.spider_controller.spider_controller import (
 
 
 class FakeField:
-    def __init__(self):
-        self.value = None
+    def __init__(self, value=None):
+        self.value = value
+
+    def getSFVec3f(self):
+        return self.value
+
+    def getSFRotation(self):
+        return self.value
 
     def setSFVec3f(self, value):
         self.value = value
@@ -21,9 +27,12 @@ class FakeField:
 
 
 class FakeBody:
-    def __init__(self):
+    def __init__(self, translation=None, rotation=None):
         self.reset_count = 0
-        self.fields = {"translation": FakeField(), "rotation": FakeField()}
+        self.fields = {
+            "translation": FakeField(translation),
+            "rotation": FakeField(rotation),
+        }
 
     def resetPhysics(self):
         self.reset_count += 1
@@ -62,8 +71,8 @@ class FakeDeviceNode:
 
 
 class FakeSupervisor:
-    def __init__(self):
-        self.body = FakeBody()
+    def __init__(self, body_translation=None, body_rotation=None):
+        self.body = FakeBody(body_translation, body_rotation)
         self.devices = {}
         self.joints = {}
         self.physics_reset_count = 0
@@ -135,3 +144,19 @@ def test_reset_restores_body_physics_and_joint_pose():
             (0.0, 28.0, 115.0),
         )
     )
+
+
+def test_reset_restores_the_body_pose_configured_by_the_world():
+    translation = [-0.062589686, 0.121963750, 0.0]
+    rotation = [0.0, 0.0, 1.0, 0.349065850]
+    supervisor = FakeSupervisor(translation, rotation)
+    controller = SpiderController(supervisor)
+
+    supervisor.body.fields["translation"].value = [1.0, 2.0, 3.0]
+    supervisor.body.fields["rotation"].value = [0.0, 1.0, 0.0, 1.0]
+    controller.reset()
+
+    assert controller.initial_body_translation == tuple(translation)
+    assert controller.initial_body_rotation == tuple(rotation)
+    assert supervisor.body.fields["translation"].value == translation
+    assert supervisor.body.fields["rotation"].value == rotation

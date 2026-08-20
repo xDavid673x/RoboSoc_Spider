@@ -31,4 +31,4 @@ DirectionalLight {
   castShadows TRUE
 }
 SlopeTerrain { angle 30 }
-Spider { name "spider_slope_30" }
+Spider { name "spider_slope_30" translation -0.091500000 0.108482649 0 rotation 0 0 1 0.523598776 }

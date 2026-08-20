@@ -81,6 +81,12 @@ class SpiderController:
         self.timestep = TIME_STEP_MS
         self.spider = VirtualSpider()
         self.body = self._get_self_node()
+        self.initial_body_translation = self._read_body_field(
+            "translation", "getSFVec3f", BODY_TRANSLATION
+        )
+        self.initial_body_rotation = self._read_body_field(
+            "rotation", "getSFRotation", BODY_ROTATION
+        )
         self.motors: dict[str, Any] = {}
         self.sensors: dict[str, Any] = {}
         self.joints: dict[str, Any] = {}
@@ -91,6 +97,36 @@ class SpiderController:
     def _get_self_node(self) -> Any | None:
         getter = getattr(self.supervisor, "getSelf", None)
         return getter() if getter else None
+
+    def _read_body_field(
+        self,
+        field_name: str,
+        getter_name: str,
+        fallback: tuple[float, ...],
+    ) -> tuple[float, ...]:
+        if self.body is not None:
+            get_field = getattr(self.body, "getField", None)
+            field = get_field(field_name) if get_field else None
+            getter = getattr(field, getter_name, None)
+            if getter:
+                try:
+                    values = tuple(float(value) for value in getter())
+                except (TypeError, ValueError):
+                    values = ()
+                if len(values) == len(fallback) and all(
+                    math.isfinite(value) for value in values
+                ):
+                    return values
+        return tuple(fallback)
+
+    def _body_field_pose(self) -> tuple[list[float], list[float]]:
+        translation = self._read_body_field(
+            "translation", "getSFVec3f", self.initial_body_translation
+        )
+        rotation = self._read_body_field(
+            "rotation", "getSFRotation", self.initial_body_rotation
+        )
+        return list(translation), list(rotation)
 
     def _lookup_devices(self) -> None:
         get_device = getattr(self.supervisor, "getDevice", None)
@@ -125,10 +161,10 @@ class SpiderController:
         if get_field:
             translation = get_field("translation")
             if translation is not None and hasattr(translation, "setSFVec3f"):
-                translation.setSFVec3f(list(BODY_TRANSLATION))
+                translation.setSFVec3f(list(self.initial_body_translation))
             rotation = get_field("rotation")
             if rotation is not None and hasattr(rotation, "setSFRotation"):
-                rotation.setSFRotation(list(BODY_ROTATION))
+                rotation.setSFRotation(list(self.initial_body_rotation))
         reset_physics = getattr(self.body, "resetPhysics", None)
         if reset_physics:
             reset_physics()
@@ -234,7 +270,10 @@ class SpiderController:
         directions reach the existing gait boundary with opposite signs.
         """
 
-        self._step_simulation(80, Command.stop())
+        initial_body_position, initial_body_yaw = self._body_state()
+        self._step_simulation(1, Command.stop())
+        first_step_position, first_step_yaw = self._body_state()
+        self._step_simulation(79, Command.stop())
         body_position, body_yaw = self._body_state()
         missing_motors = sorted(
             key for key, motor in self.motors.items() if motor is None
@@ -261,6 +300,7 @@ class SpiderController:
         stop_angles = self.spider.joint_angles_deg()["legi"]
         self.apply({"mode": "init"})
         reset_angles = self.spider.joint_angles_deg()["legi"]
+        reset_translation, reset_rotation = self._body_field_pose()
         result = {
             "devices": len(self.motors) - len(missing_motors),
             "sensors": len(self.sensors) - len(missing_sensors),
@@ -269,11 +309,25 @@ class SpiderController:
             "sensor_angles_deg": (
                 {} if missing_sensors else self._sensor_angles_deg()
             ),
+            "configured_body_translation_m": list(self.initial_body_translation),
+            "configured_body_rotation": list(self.initial_body_rotation),
+            "initial_body_position_m": initial_body_position,
+            "initial_body_yaw_rad": initial_body_yaw,
+            "first_step_position_m": first_step_position,
+            "first_step_yaw_rad": first_step_yaw,
+            "first_step_displacement_m": math.dist(
+                initial_body_position, first_step_position
+            ),
             "body_position_m": body_position,
             "body_yaw_rad": body_yaw,
+            "settling_displacement_m": math.dist(
+                initial_body_position, body_position
+            ),
             "deltas_mm": deltas,
             "stop_angles_deg": stop_angles,
             "reset_angles_deg": reset_angles,
+            "reset_body_translation_m": reset_translation,
+            "reset_body_rotation": reset_rotation,
         }
         self._write_smoke_result(result, result_path)
         simulation_quit = getattr(self.supervisor, "simulationQuit", None)
