@@ -38,19 +38,7 @@ PROTO Spider [
         children [
           # legi mount is fixed to body; moving links are nested below.
           Transform {
-            translation 0.234106941 0.333067652 -0.074902247
-            rotation 0 0.707106781 0.707106781 3.141592654
-            scale 0.001 0.001 0.001
-            children [
-              Shape {
-                castShadows FALSE
-                appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                geometry Mesh { url [ "../assets/cad/final_leg_base_mesh_66cb44f892cf.stl" ] }
-              }
-            ]
-          }
-          Transform {
-            translation 0.107594899 -0.032139206 -0.010002251
+            translation -0.029047494 0.0087 -0.010144625
             rotation 0 1 0 0
             scale 0.001 0.001 0.001
             children [
@@ -62,7 +50,7 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation 0.141606941 8.881160846 0.000036558
+            translation 0.004964548 8.922000052 -0.000105816
             rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
@@ -74,7 +62,7 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation 0.186467468 -0.040839206 -0.008833244
+            translation 0.049825075 0 -0.008975618
             rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
@@ -86,7 +74,7 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation 0.186467468 -0.040839206 -0.008833244
+            translation 0.049825075 0 -0.008975618
             rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
@@ -105,7 +93,21 @@ PROTO Spider [
             ]
             endPoint Solid {
               name "legi_coxa_solid"
+              translation 0 0 0
+              rotation 0 1 0 0
               children [
+                Transform {
+                  translation 0.097464548 0.373906858 -0.075044621
+                  rotation 0 0.707106781 0.707106781 3.141592654
+                  scale 0.001 0.001 0.001
+                  children [
+                    Shape {
+                      castShadows FALSE
+                      appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                      geometry Mesh { url [ "../assets/cad/final_leg_base_mesh_66cb44f892cf.stl" ] }
+                    }
+                  ]
+                }
                 Transform {
                   translation 0.052214548 -0.002375188 0.019042229
                   rotation -0.577350269 -0.577350269 0.577350269 2.094395102
@@ -119,7 +121,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.042175739 0.031636854 -8.894257823
+                  translation 0.042175738 0.031636854 -8.894257824
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -131,7 +133,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.051045541 0.076497382 0.027742229
+                  translation 0.051045541 0.076497381 0.027742229
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -143,7 +145,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.051045541 0.076497382 0.027742229
+                  translation 0.051045541 0.076497381 0.027742229
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -163,6 +165,7 @@ PROTO Spider [
                   endPoint Solid {
                     name "legi_femur_solid"
                     translation 0.042069923 0.026672306 0.027742229
+                    rotation 0 0 -1 0.48869219
                     children [
                       Transform {
                         translation 0.044014625 0.141385607 -0.029515794
@@ -173,30 +176,6 @@ PROTO Spider [
                             castShadows FALSE
                             appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
                             geometry Mesh { url [ "../assets/cad/final_mid_leg_mesh_300a224a7f01.stl" ] }
-                          }
-                        ]
-                      }
-                      Transform {
-                        translation 0.117106667 0.010114548 -0.0087
-                        rotation 0 0.707106781 0.707106781 3.141592654
-                        scale 0.001 0.001 0.001
-                        children [
-                          Shape {
-                            castShadows FALSE
-                            appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                            geometry Mesh { url [ "../assets/cad/rsd3230_govde_body1_d3834e3a484c.stl" ] }
-                          }
-                        ]
-                      }
-                      Transform {
-                        translation 0.083094625 0.000075739 -8.922000052
-                        rotation 0 1 0 3.141592654
-                        scale 0.001 0.001 0.001
-                        children [
-                          Shape {
-                            castShadows FALSE
-                            appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                            geometry Mesh { url [ "../assets/cad/servo_support_bracket_mesh_e5a97ae67089.stl" ] }
                           }
                         ]
                       }
@@ -225,18 +204,19 @@ PROTO Spider [
                         ]
                       }
                       HingeJoint {
-                        jointParameters HingeJointParameters { anchor 0.088059173 -0.000030077 0 axis 0 0 -1 minStop 0 maxStop 2.268928028 }
+                        jointParameters HingeJointParameters { anchor 0.088059172 -0.000030077 0 axis 0 0 -1 minStop 0 maxStop 2.268928028 }
                         device [
                           RotationalMotor { name "legi_tibia_motor" maxTorque IS jointTorque minPosition 0 maxPosition 2.268928028 }
                           PositionSensor { name "legi_tibia_sensor" }
                         ]
                         endPoint Solid {
                           name "legi_tibia_solid"
-                          translation 0.088059173 -0.000030077 0
+                          translation 0.088059172 -0.000030077 0
+                          rotation 0 0 1 2.00712864
                           contactMaterial "spider_foot"
                           children [
                             Transform {
-                              translation -0.165124892 0.175293415 -0.027997676
+                              translation -0.165124891 0.175293415 -0.027997676
                               rotation 0.577350269 -0.577350269 0.577350269 2.094395102
                               scale 0.001 0.001 0.001
                               children [
@@ -247,12 +227,36 @@ PROTO Spider [
                                 }
                               ]
                             }
+                            Transform {
+                              translation 0.029047494 0.010144625 -0.0087
+                              rotation 0 0.707106781 0.707106781 3.141592654
+                              scale 0.001 0.001 0.001
+                              children [
+                                Shape {
+                                  castShadows FALSE
+                                  appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                                  geometry Mesh { url [ "../assets/cad/rsd3230_govde_body1_d3834e3a484c.stl" ] }
+                                }
+                              ]
+                            }
+                            Transform {
+                              translation -0.004964547 0.000105815 -8.922000053
+                              rotation 0 1 0 3.141592654
+                              scale 0.001 0.001 0.001
+                              children [
+                                Shape {
+                                  castShadows FALSE
+                                  appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                                  geometry Mesh { url [ "../assets/cad/servo_support_bracket_mesh_e5a97ae67089.stl" ] }
+                                }
+                              ]
+                            }
                           ]
                           boundingObject Group {
                             children [
                               Transform {
-                                translation 0.082431126 -0.008603293 -0.017748838
-                                children [ Box { size 0.182862252 0.035206585 0.053497676 } ]
+                                translation 0.029932305 -0.008603293 -0.011248838
+                                children [ Box { size 0.077864611 0.035206585 0.040497676 } ]
                               }
                             ]
                           }
@@ -263,8 +267,8 @@ PROTO Spider [
                     boundingObject Group {
                       children [
                         Transform {
-                          translation 0.044029587 -0.000015038 0
-                          children [ Box { size 0.108059173 0.020030077 0.02 } ]
+                          translation 0.044029586 -0.000015039 0
+                          children [ Box { size 0.108059172 0.020030077 0.02 } ]
                         }
                       ]
                     }
@@ -291,20 +295,8 @@ PROTO Spider [
         children [
           # legj mount is fixed to body; moving links are nested below.
           Transform {
-            translation 0.051937079 0.333067652 -0.239758532
-            rotation 0.377964473 -0.654653671 0.654653671 2.418858406
-            scale 0.001 0.001 0.001
-            children [
-              Shape {
-                castShadows FALSE
-                appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                geometry Mesh { url [ "../assets/cad/final_leg_base_mesh_66cb44f892cf.stl" ] }
-              }
-            ]
-          }
-          Transform {
-            translation 0.044886103 -0.032139206 -0.097745892
-            rotation 0 1 0 1.047197551
+            translation -0.029047494 0.0087 -0.010144625
+            rotation 0 1 0 0
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -315,8 +307,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation 0.070585988 8.881160846 -0.12218178
-            rotation -0.774596669 0.447213596 0.447213596 1.823476582
+            translation 0.004964548 8.922000052 -0.000105815
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -327,8 +319,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation 0.085334777 -0.040839206 -0.165467038
-            rotation -0.774596669 0.447213596 0.447213596 1.823476582
+            translation 0.049825075 0 -0.008975618
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -339,8 +331,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation 0.085334777 -0.040839206 -0.165467038
-            rotation -0.774596669 0.447213596 0.447213596 1.823476582
+            translation 0.049825075 0 -0.008975618
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -358,7 +350,21 @@ PROTO Spider [
             ]
             endPoint Solid {
               name "legj_coxa_solid"
+              translation 0 0 0
+              rotation 0 1 0 0
               children [
+                Transform {
+                  translation 0.097464548 0.373906858 -0.07504462
+                  rotation 0 0.707106781 0.707106781 3.141592654
+                  scale 0.001 0.001 0.001
+                  children [
+                    Shape {
+                      castShadows FALSE
+                      appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                      geometry Mesh { url [ "../assets/cad/final_leg_base_mesh_66cb44f892cf.stl" ] }
+                    }
+                  ]
+                }
                 Transform {
                   translation 0.052214548 -0.002375188 0.019042229
                   rotation -0.577350269 -0.577350269 0.577350269 2.094395102
@@ -372,7 +378,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.04217574 0.031636854 -8.894257825
+                  translation 0.042175739 0.031636854 -8.894257825
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -384,7 +390,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.051045541 0.076497382 0.027742229
+                  translation 0.051045541 0.076497381 0.027742229
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -396,7 +402,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.051045541 0.076497382 0.027742229
+                  translation 0.051045541 0.076497381 0.027742229
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -408,17 +414,18 @@ PROTO Spider [
                   ]
                 }
                 HingeJoint {
-                  jointParameters HingeJointParameters { anchor 0.042069923 0.026672306 0.027742229 axis 0 0 1 minStop -1.570796327 maxStop 1.570796327 }
+                  jointParameters HingeJointParameters { anchor 0.042069923 0.026672306 0.02774223 axis 0 0 1 minStop -1.570796327 maxStop 1.570796327 }
                   device [
                     RotationalMotor { name "legj_femur_motor" maxTorque IS jointTorque minPosition -1.570796327 maxPosition 1.570796327 }
                     PositionSensor { name "legj_femur_sensor" }
                   ]
                   endPoint Solid {
                     name "legj_femur_solid"
-                    translation 0.042069923 0.026672306 0.027742229
+                    translation 0.042069923 0.026672306 0.02774223
+                    rotation 0 0 -1 0.48869219
                     children [
                       Transform {
-                        translation 0.044014625 0.141385607 -0.029515794
+                        translation 0.044014625 0.141385607 -0.029515795
                         rotation 0 0.707106781 0.707106781 3.141592654
                         scale 0.001 0.001 0.001
                         children [
@@ -426,30 +433,6 @@ PROTO Spider [
                             castShadows FALSE
                             appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
                             geometry Mesh { url [ "../assets/cad/final_mid_leg_mesh_300a224a7f01.stl" ] }
-                          }
-                        ]
-                      }
-                      Transform {
-                        translation 0.117106667 0.010114548 -0.0087
-                        rotation 0 0.707106781 0.707106781 3.141592654
-                        scale 0.001 0.001 0.001
-                        children [
-                          Shape {
-                            castShadows FALSE
-                            appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                            geometry Mesh { url [ "../assets/cad/rsd3230_govde_body1_d3834e3a484c.stl" ] }
-                          }
-                        ]
-                      }
-                      Transform {
-                        translation 0.083094626 0.000075739 -8.922000054
-                        rotation 0 1 0 3.141592654
-                        scale 0.001 0.001 0.001
-                        children [
-                          Shape {
-                            castShadows FALSE
-                            appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                            geometry Mesh { url [ "../assets/cad/servo_support_bracket_mesh_e5a97ae67089.stl" ] }
                           }
                         ]
                       }
@@ -478,14 +461,15 @@ PROTO Spider [
                         ]
                       }
                       HingeJoint {
-                        jointParameters HingeJointParameters { anchor 0.088059173 -0.000030077 0 axis 0 0 -1 minStop 0 maxStop 2.268928028 }
+                        jointParameters HingeJointParameters { anchor 0.088059173 -0.000030077 -0.000000001 axis 0 0 -1 minStop 0 maxStop 2.268928028 }
                         device [
                           RotationalMotor { name "legj_tibia_motor" maxTorque IS jointTorque minPosition 0 maxPosition 2.268928028 }
                           PositionSensor { name "legj_tibia_sensor" }
                         ]
                         endPoint Solid {
                           name "legj_tibia_solid"
-                          translation 0.088059173 -0.000030077 0
+                          translation 0.088059173 -0.000030077 -0.000000001
+                          rotation 0 0 1 2.00712864
                           contactMaterial "spider_foot"
                           children [
                             Transform {
@@ -500,12 +484,36 @@ PROTO Spider [
                                 }
                               ]
                             }
+                            Transform {
+                              translation 0.029047494 0.010144625 -0.0087
+                              rotation 0 0.707106781 0.707106781 3.141592654
+                              scale 0.001 0.001 0.001
+                              children [
+                                Shape {
+                                  castShadows FALSE
+                                  appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                                  geometry Mesh { url [ "../assets/cad/rsd3230_govde_body1_d3834e3a484c.stl" ] }
+                                }
+                              ]
+                            }
+                            Transform {
+                              translation -0.004964547 0.000105815 -8.922000054
+                              rotation 0 1 0 3.141592654
+                              scale 0.001 0.001 0.001
+                              children [
+                                Shape {
+                                  castShadows FALSE
+                                  appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                                  geometry Mesh { url [ "../assets/cad/servo_support_bracket_mesh_e5a97ae67089.stl" ] }
+                                }
+                              ]
+                            }
                           ]
                           boundingObject Group {
                             children [
                               Transform {
-                                translation 0.085678721 -0.008603293 -0.012123838
-                                children [ Box { size 0.189357443 0.035206585 0.042247676 } ]
+                                translation 0.029932305 -0.008603293 -0.011248838
+                                children [ Box { size 0.07786461 0.035206585 0.040497676 } ]
                               }
                             ]
                           }
@@ -516,8 +524,8 @@ PROTO Spider [
                     boundingObject Group {
                       children [
                         Transform {
-                          translation 0.044029587 -0.000015038 0
-                          children [ Box { size 0.108059173 0.020030077 0.02 } ]
+                          translation 0.044029587 -0.000015039 0
+                          children [ Box { size 0.108059173 0.020030077 0.020000001 } ]
                         }
                       ]
                     }
@@ -528,8 +536,8 @@ PROTO Spider [
               boundingObject Group {
                 children [
                   Transform {
-                    translation 0.021034962 0.013336153 0.013871114
-                    children [ Box { size 0.062069923 0.046672306 0.047742229 } ]
+                    translation 0.021034962 0.013336153 0.013871115
+                    children [ Box { size 0.062069923 0.046672306 0.04774223 } ]
                   }
                 ]
               }
@@ -544,20 +552,8 @@ PROTO Spider [
         children [
           # legk mount is fixed to body; moving links are nested below.
           Transform {
-            translation -0.181924703 0.333067652 -0.165356576
-            rotation 0.774596669 -0.447213596 0.447213596 1.823476582
-            scale 0.001 0.001 0.001
-            children [
-              Shape {
-                castShadows FALSE
-                appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                geometry Mesh { url [ "../assets/cad/final_leg_base_mesh_66cb44f892cf.stl" ] }
-              }
-            ]
-          }
-          Transform {
-            translation -0.062463637 -0.032139206 -0.088243932
-            rotation 0 1 0 2.094395102
+            translation -0.029047493 0.0087 -0.010144624
+            rotation 0 1 0 0
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -568,8 +564,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation -0.070775794 8.881160846 -0.122718628
-            rotation -0.377964473 0.654653671 0.654653671 2.418858406
+            translation 0.004964548 8.922000052 -0.000105815
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -580,8 +576,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation -0.100887532 -0.040839206 -0.157134084
-            rotation -0.377964473 0.654653671 0.654653671 2.418858406
+            translation 0.049825076 0 -0.008975618
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -592,8 +588,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation -0.100887532 -0.040839206 -0.157134084
-            rotation -0.377964473 0.654653671 0.654653671 2.418858406
+            translation 0.049825076 0 -0.008975618
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -611,7 +607,21 @@ PROTO Spider [
             ]
             endPoint Solid {
               name "legk_coxa_solid"
+              translation 0 0 0
+              rotation 0 1 0 0
               children [
+                Transform {
+                  translation 0.097464548 0.373906858 -0.07504462
+                  rotation 0 0.707106781 0.707106781 3.141592654
+                  scale 0.001 0.001 0.001
+                  children [
+                    Shape {
+                      castShadows FALSE
+                      appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                      geometry Mesh { url [ "../assets/cad/final_leg_base_mesh_66cb44f892cf.stl" ] }
+                    }
+                  ]
+                }
                 Transform {
                   translation 0.052214548 -0.002375188 0.019042229
                   rotation -0.577350269 -0.577350269 0.577350269 2.094395102
@@ -637,7 +647,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.051045541 0.076497382 0.027742229
+                  translation 0.051045542 0.076497381 0.027742229
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -649,7 +659,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.051045541 0.076497382 0.027742229
+                  translation 0.051045542 0.076497381 0.027742229
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -661,17 +671,18 @@ PROTO Spider [
                   ]
                 }
                 HingeJoint {
-                  jointParameters HingeJointParameters { anchor 0.042069923 0.026672306 0.027742229 axis 0 0 1 minStop -1.570796327 maxStop 1.570796327 }
+                  jointParameters HingeJointParameters { anchor 0.042069923 0.026672306 0.02774223 axis 0 0 1 minStop -1.570796327 maxStop 1.570796327 }
                   device [
                     RotationalMotor { name "legk_femur_motor" maxTorque IS jointTorque minPosition -1.570796327 maxPosition 1.570796327 }
                     PositionSensor { name "legk_femur_sensor" }
                   ]
                   endPoint Solid {
                     name "legk_femur_solid"
-                    translation 0.042069923 0.026672306 0.027742229
+                    translation 0.042069923 0.026672306 0.02774223
+                    rotation 0 0 -1 0.48869219
                     children [
                       Transform {
-                        translation 0.044014625 0.141385607 -0.029515794
+                        translation 0.044014625 0.141385607 -0.029515795
                         rotation 0 0.707106781 0.707106781 3.141592654
                         scale 0.001 0.001 0.001
                         children [
@@ -683,31 +694,7 @@ PROTO Spider [
                         ]
                       }
                       Transform {
-                        translation 0.117106667 0.010114548 -0.0087
-                        rotation 0 0.707106781 0.707106781 3.141592654
-                        scale 0.001 0.001 0.001
-                        children [
-                          Shape {
-                            castShadows FALSE
-                            appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                            geometry Mesh { url [ "../assets/cad/rsd3230_govde_body1_d3834e3a484c.stl" ] }
-                          }
-                        ]
-                      }
-                      Transform {
-                        translation 0.083094624 0.000075739 -8.922000054
-                        rotation 0 1 0 3.141592654
-                        scale 0.001 0.001 0.001
-                        children [
-                          Shape {
-                            castShadows FALSE
-                            appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                            geometry Mesh { url [ "../assets/cad/servo_support_bracket_mesh_e5a97ae67089.stl" ] }
-                          }
-                        ]
-                      }
-                      Transform {
-                        translation 0.038234097 0.008945541 0
+                        translation 0.038234098 0.008945541 0
                         rotation 0 1 0 3.141592654
                         scale 0.001 0.001 0.001
                         children [
@@ -719,7 +706,7 @@ PROTO Spider [
                         ]
                       }
                       Transform {
-                        translation 0.038234097 0.008945541 0
+                        translation 0.038234098 0.008945541 0
                         rotation 0 1 0 3.141592654
                         scale 0.001 0.001 0.001
                         children [
@@ -731,14 +718,15 @@ PROTO Spider [
                         ]
                       }
                       HingeJoint {
-                        jointParameters HingeJointParameters { anchor 0.088059173 -0.000030077 0 axis 0 0 -1 minStop 0 maxStop 2.268928028 }
+                        jointParameters HingeJointParameters { anchor 0.088059174 -0.000030077 -0.000000001 axis 0 0 -1 minStop 0 maxStop 2.268928028 }
                         device [
                           RotationalMotor { name "legk_tibia_motor" maxTorque IS jointTorque minPosition 0 maxPosition 2.268928028 }
                           PositionSensor { name "legk_tibia_sensor" }
                         ]
                         endPoint Solid {
                           name "legk_tibia_solid"
-                          translation 0.088059173 -0.000030077 0
+                          translation 0.088059174 -0.000030077 -0.000000001
+                          rotation 0 0 1 2.00712864
                           contactMaterial "spider_foot"
                           children [
                             Transform {
@@ -753,12 +741,36 @@ PROTO Spider [
                                 }
                               ]
                             }
+                            Transform {
+                              translation 0.029047494 0.010144625 -0.0087
+                              rotation 0 0.707106781 0.707106781 3.141592654
+                              scale 0.001 0.001 0.001
+                              children [
+                                Shape {
+                                  castShadows FALSE
+                                  appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                                  geometry Mesh { url [ "../assets/cad/rsd3230_govde_body1_d3834e3a484c.stl" ] }
+                                }
+                              ]
+                            }
+                            Transform {
+                              translation -0.004964549 0.000105815 -8.922000054
+                              rotation 0 1 0 3.141592654
+                              scale 0.001 0.001 0.001
+                              children [
+                                Shape {
+                                  castShadows FALSE
+                                  appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                                  geometry Mesh { url [ "../assets/cad/servo_support_bracket_mesh_e5a97ae67089.stl" ] }
+                                }
+                              ]
+                            }
                           ]
                           boundingObject Group {
                             children [
                               Transform {
-                                translation 0.085678722 -0.008603293 -0.015873838
-                                children [ Box { size 0.189357444 0.035206585 0.049747676 } ]
+                                translation 0.029932305 -0.008603293 -0.011248838
+                                children [ Box { size 0.07786461 0.035206585 0.040497676 } ]
                               }
                             ]
                           }
@@ -769,8 +781,8 @@ PROTO Spider [
                     boundingObject Group {
                       children [
                         Transform {
-                          translation 0.044029587 -0.000015038 0
-                          children [ Box { size 0.108059173 0.020030077 0.02 } ]
+                          translation 0.044029587 -0.000015039 0
+                          children [ Box { size 0.108059174 0.020030077 0.020000001 } ]
                         }
                       ]
                     }
@@ -781,8 +793,8 @@ PROTO Spider [
               boundingObject Group {
                 children [
                   Transform {
-                    translation 0.021034962 0.013336153 0.013871114
-                    children [ Box { size 0.062069923 0.046672306 0.047742229 } ]
+                    translation 0.021034962 0.013336153 0.013871115
+                    children [ Box { size 0.062069923 0.046672306 0.04774223 } ]
                   }
                 ]
               }
@@ -797,20 +809,8 @@ PROTO Spider [
         children [
           # legl mount is fixed to body; moving links are nested below.
           Transform {
-            translation -0.234393059 0.333067652 0.074897745
-            rotation 1 0 0 1.570796327
-            scale 0.001 0.001 0.001
-            children [
-              Shape {
-                castShadows FALSE
-                appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                geometry Mesh { url [ "../assets/cad/final_leg_base_mesh_66cb44f892cf.stl" ] }
-              }
-            ]
-          }
-          Transform {
-            translation -0.107881018 -0.032139206 0.009997749
-            rotation 0 1 0 3.141592654
+            translation -0.029047494 0.0087 -0.010144624
+            rotation 0 1 0 0
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -821,8 +821,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation -0.141893059 8.881160846 -0.00004106
-            rotation 0 0.707106781 0.707106781 3.141592654
+            translation 0.004964547 8.922000052 -0.000105815
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -833,8 +833,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation -0.186753587 -0.040839206 0.008828743
-            rotation 0 0.707106781 0.707106781 3.141592654
+            translation 0.049825075 0 -0.008975618
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -845,8 +845,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation -0.186753587 -0.040839206 0.008828743
-            rotation 0 0.707106781 0.707106781 3.141592654
+            translation 0.049825075 0 -0.008975618
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -864,9 +864,23 @@ PROTO Spider [
             ]
             endPoint Solid {
               name "legl_coxa_solid"
+              translation 0 0 0
+              rotation 0 1 0 0
               children [
                 Transform {
-                  translation 0.052214548 -0.002375188 0.019042229
+                  translation 0.097464547 0.373906858 -0.07504462
+                  rotation 0 0.707106781 0.707106781 3.141592654
+                  scale 0.001 0.001 0.001
+                  children [
+                    Shape {
+                      castShadows FALSE
+                      appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                      geometry Mesh { url [ "../assets/cad/final_leg_base_mesh_66cb44f892cf.stl" ] }
+                    }
+                  ]
+                }
+                Transform {
+                  translation 0.052214547 -0.002375188 0.01904223
                   rotation -0.577350269 -0.577350269 0.577350269 2.094395102
                   scale 0.001 0.001 0.001
                   children [
@@ -878,7 +892,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.042175739 0.031636854 -8.894257823
+                  translation 0.042175738 0.031636854 -8.894257823
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -890,7 +904,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.051045541 0.076497382 0.027742229
+                  translation 0.051045541 0.076497381 0.02774223
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -902,7 +916,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.051045541 0.076497382 0.027742229
+                  translation 0.051045541 0.076497381 0.02774223
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -914,17 +928,18 @@ PROTO Spider [
                   ]
                 }
                 HingeJoint {
-                  jointParameters HingeJointParameters { anchor 0.042069923 0.026672306 0.027742229 axis 0 0 1 minStop -1.570796327 maxStop 1.570796327 }
+                  jointParameters HingeJointParameters { anchor 0.042069923 0.026672306 0.02774223 axis 0 0 1 minStop -1.570796327 maxStop 1.570796327 }
                   device [
                     RotationalMotor { name "legl_femur_motor" maxTorque IS jointTorque minPosition -1.570796327 maxPosition 1.570796327 }
                     PositionSensor { name "legl_femur_sensor" }
                   ]
                   endPoint Solid {
                     name "legl_femur_solid"
-                    translation 0.042069923 0.026672306 0.027742229
+                    translation 0.042069923 0.026672306 0.02774223
+                    rotation 0 0 -1 0.48869219
                     children [
                       Transform {
-                        translation 0.044014625 0.141385607 -0.029515794
+                        translation 0.044014624 0.141385607 -0.029515795
                         rotation 0 0.707106781 0.707106781 3.141592654
                         scale 0.001 0.001 0.001
                         children [
@@ -932,30 +947,6 @@ PROTO Spider [
                             castShadows FALSE
                             appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
                             geometry Mesh { url [ "../assets/cad/final_mid_leg_mesh_300a224a7f01.stl" ] }
-                          }
-                        ]
-                      }
-                      Transform {
-                        translation 0.117106667 0.010114548 -0.0087
-                        rotation 0 0.707106781 0.707106781 3.141592654
-                        scale 0.001 0.001 0.001
-                        children [
-                          Shape {
-                            castShadows FALSE
-                            appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                            geometry Mesh { url [ "../assets/cad/rsd3230_govde_body1_d3834e3a484c.stl" ] }
-                          }
-                        ]
-                      }
-                      Transform {
-                        translation 0.083094625 0.000075739 -8.922000052
-                        rotation 0 1 0 3.141592654
-                        scale 0.001 0.001 0.001
-                        children [
-                          Shape {
-                            castShadows FALSE
-                            appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                            geometry Mesh { url [ "../assets/cad/servo_support_bracket_mesh_e5a97ae67089.stl" ] }
                           }
                         ]
                       }
@@ -984,18 +975,19 @@ PROTO Spider [
                         ]
                       }
                       HingeJoint {
-                        jointParameters HingeJointParameters { anchor 0.088059173 -0.000030077 0 axis 0 0 -1 minStop 0 maxStop 2.268928028 }
+                        jointParameters HingeJointParameters { anchor 0.088059172 -0.000030077 0 axis 0 0 -1 minStop 0 maxStop 2.268928028 }
                         device [
                           RotationalMotor { name "legl_tibia_motor" maxTorque IS jointTorque minPosition 0 maxPosition 2.268928028 }
                           PositionSensor { name "legl_tibia_sensor" }
                         ]
                         endPoint Solid {
                           name "legl_tibia_solid"
-                          translation 0.088059173 -0.000030077 0
+                          translation 0.088059172 -0.000030077 0
+                          rotation 0 0 1 2.00712864
                           contactMaterial "spider_foot"
                           children [
                             Transform {
-                              translation -0.165124892 0.175293415 -0.027997676
+                              translation -0.165124891 0.175293415 -0.027997676
                               rotation 0.577350269 -0.577350269 0.577350269 2.094395102
                               scale 0.001 0.001 0.001
                               children [
@@ -1006,12 +998,36 @@ PROTO Spider [
                                 }
                               ]
                             }
+                            Transform {
+                              translation 0.029047494 0.010144625 -0.0087
+                              rotation 0 0.707106781 0.707106781 3.141592654
+                              scale 0.001 0.001 0.001
+                              children [
+                                Shape {
+                                  castShadows FALSE
+                                  appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                                  geometry Mesh { url [ "../assets/cad/rsd3230_govde_body1_d3834e3a484c.stl" ] }
+                                }
+                              ]
+                            }
+                            Transform {
+                              translation -0.004964548 0.000105815 -8.922000053
+                              rotation 0 1 0 3.141592654
+                              scale 0.001 0.001 0.001
+                              children [
+                                Shape {
+                                  castShadows FALSE
+                                  appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                                  geometry Mesh { url [ "../assets/cad/servo_support_bracket_mesh_e5a97ae67089.stl" ] }
+                                }
+                              ]
+                            }
                           ]
                           boundingObject Group {
                             children [
                               Transform {
-                                translation 0.082431126 -0.008603293 -0.010248837
-                                children [ Box { size 0.182862252 0.035206585 0.038497675 } ]
+                                translation 0.029932305 -0.008603293 -0.011248838
+                                children [ Box { size 0.077864611 0.035206585 0.040497676 } ]
                               }
                             ]
                           }
@@ -1022,8 +1038,8 @@ PROTO Spider [
                     boundingObject Group {
                       children [
                         Transform {
-                          translation 0.044029587 -0.000015038 0
-                          children [ Box { size 0.108059173 0.020030077 0.02 } ]
+                          translation 0.044029586 -0.000015039 0
+                          children [ Box { size 0.108059172 0.020030077 0.02 } ]
                         }
                       ]
                     }
@@ -1034,8 +1050,8 @@ PROTO Spider [
               boundingObject Group {
                 children [
                   Transform {
-                    translation 0.021034962 0.013336153 0.013871114
-                    children [ Box { size 0.062069923 0.046672306 0.047742229 } ]
+                    translation 0.021034962 0.013336153 0.013871115
+                    children [ Box { size 0.062069923 0.046672306 0.04774223 } ]
                   }
                 ]
               }
@@ -1050,20 +1066,8 @@ PROTO Spider [
         children [
           # legm mount is fixed to body; moving links are nested below.
           Transform {
-            translation -0.052082323 0.333067652 0.24000834
-            rotation 0.774596669 0.447213596 -0.447213596 1.823476582
-            scale 0.001 0.001 0.001
-            children [
-              Shape {
-                castShadows FALSE
-                appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                geometry Mesh { url [ "../assets/cad/final_leg_base_mesh_66cb44f892cf.stl" ] }
-              }
-            ]
-          }
-          Transform {
-            translation -0.045031347 -0.032139206 0.0979957
-            rotation 0 -1 0 2.094395102
+            translation -0.029047494 0.0087 -0.010144624
+            rotation 0 1 0 0
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -1074,8 +1078,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation -0.070731232 8.881160846 0.122431587
-            rotation -0.377964473 -0.654653671 -0.654653671 2.418858406
+            translation 0.004964548 8.922000052 -0.000105815
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -1086,8 +1090,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation -0.085480021 -0.040839206 0.165716845
-            rotation -0.377964473 -0.654653671 -0.654653671 2.418858406
+            translation 0.049825076 0 -0.008975618
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -1098,8 +1102,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation -0.085480021 -0.040839206 0.165716845
-            rotation -0.377964473 -0.654653671 -0.654653671 2.418858406
+            translation 0.049825076 0 -0.008975618
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -1117,9 +1121,23 @@ PROTO Spider [
             ]
             endPoint Solid {
               name "legm_coxa_solid"
+              translation 0 0 0
+              rotation 0 1 0 0
               children [
                 Transform {
-                  translation 0.052214548 -0.002375188 0.019042229
+                  translation 0.097464548 0.373906858 -0.07504462
+                  rotation 0 0.707106781 0.707106781 3.141592654
+                  scale 0.001 0.001 0.001
+                  children [
+                    Shape {
+                      castShadows FALSE
+                      appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                      geometry Mesh { url [ "../assets/cad/final_leg_base_mesh_66cb44f892cf.stl" ] }
+                    }
+                  ]
+                }
+                Transform {
+                  translation 0.052214548 -0.002375188 0.01904223
                   rotation -0.577350269 -0.577350269 0.577350269 2.094395102
                   scale 0.001 0.001 0.001
                   children [
@@ -1143,7 +1161,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.051045541 0.076497382 0.027742229
+                  translation 0.051045542 0.076497381 0.02774223
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -1155,7 +1173,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.051045541 0.076497382 0.027742229
+                  translation 0.051045542 0.076497381 0.02774223
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -1167,14 +1185,15 @@ PROTO Spider [
                   ]
                 }
                 HingeJoint {
-                  jointParameters HingeJointParameters { anchor 0.042069923 0.026672306 0.027742229 axis 0 0 1 minStop -1.570796327 maxStop 1.570796327 }
+                  jointParameters HingeJointParameters { anchor 0.042069924 0.026672306 0.027742229 axis 0 0 1 minStop -1.570796327 maxStop 1.570796327 }
                   device [
                     RotationalMotor { name "legm_femur_motor" maxTorque IS jointTorque minPosition -1.570796327 maxPosition 1.570796327 }
                     PositionSensor { name "legm_femur_sensor" }
                   ]
                   endPoint Solid {
                     name "legm_femur_solid"
-                    translation 0.042069923 0.026672306 0.027742229
+                    translation 0.042069924 0.026672306 0.027742229
+                    rotation 0 0 -1 0.48869219
                     children [
                       Transform {
                         translation 0.044014625 0.141385607 -0.029515794
@@ -1185,30 +1204,6 @@ PROTO Spider [
                             castShadows FALSE
                             appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
                             geometry Mesh { url [ "../assets/cad/final_mid_leg_mesh_300a224a7f01.stl" ] }
-                          }
-                        ]
-                      }
-                      Transform {
-                        translation 0.117106667 0.010114548 -0.0087
-                        rotation 0 0.707106781 0.707106781 3.141592654
-                        scale 0.001 0.001 0.001
-                        children [
-                          Shape {
-                            castShadows FALSE
-                            appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                            geometry Mesh { url [ "../assets/cad/rsd3230_govde_body1_d3834e3a484c.stl" ] }
-                          }
-                        ]
-                      }
-                      Transform {
-                        translation 0.083094626 0.000075739 -8.922000054
-                        rotation 0 1 0 3.141592654
-                        scale 0.001 0.001 0.001
-                        children [
-                          Shape {
-                            castShadows FALSE
-                            appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                            geometry Mesh { url [ "../assets/cad/servo_support_bracket_mesh_e5a97ae67089.stl" ] }
                           }
                         ]
                       }
@@ -1237,18 +1232,19 @@ PROTO Spider [
                         ]
                       }
                       HingeJoint {
-                        jointParameters HingeJointParameters { anchor 0.088059173 -0.000030077 0 axis 0 0 -1 minStop 0 maxStop 2.268928028 }
+                        jointParameters HingeJointParameters { anchor 0.088059172 -0.000030077 0.000000001 axis 0 0 -1 minStop 0 maxStop 2.268928028 }
                         device [
                           RotationalMotor { name "legm_tibia_motor" maxTorque IS jointTorque minPosition 0 maxPosition 2.268928028 }
                           PositionSensor { name "legm_tibia_sensor" }
                         ]
                         endPoint Solid {
                           name "legm_tibia_solid"
-                          translation 0.088059173 -0.000030077 0
+                          translation 0.088059172 -0.000030077 0.000000001
+                          rotation 0 0 1 2.00712864
                           contactMaterial "spider_foot"
                           children [
                             Transform {
-                              translation -0.165124892 0.175293415 -0.027997676
+                              translation -0.165124892 0.175293415 -0.027997677
                               rotation 0.577350269 -0.577350269 0.577350269 2.094395102
                               scale 0.001 0.001 0.001
                               children [
@@ -1259,12 +1255,36 @@ PROTO Spider [
                                 }
                               ]
                             }
+                            Transform {
+                              translation 0.029047494 0.010144625 -0.0087
+                              rotation 0 0.707106781 0.707106781 3.141592654
+                              scale 0.001 0.001 0.001
+                              children [
+                                Shape {
+                                  castShadows FALSE
+                                  appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                                  geometry Mesh { url [ "../assets/cad/rsd3230_govde_body1_d3834e3a484c.stl" ] }
+                                }
+                              ]
+                            }
+                            Transform {
+                              translation -0.004964547 0.000105815 -8.922000055
+                              rotation 0 1 0 3.141592654
+                              scale 0.001 0.001 0.001
+                              children [
+                                Shape {
+                                  castShadows FALSE
+                                  appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                                  geometry Mesh { url [ "../assets/cad/servo_support_bracket_mesh_e5a97ae67089.stl" ] }
+                                }
+                              ]
+                            }
                           ]
                           boundingObject Group {
                             children [
                               Transform {
-                                translation 0.085678721 -0.008603293 -0.012123838
-                                children [ Box { size 0.189357443 0.035206585 0.042247675 } ]
+                                translation 0.029932305 -0.008603293 -0.011248838
+                                children [ Box { size 0.077864611 0.035206585 0.040497676 } ]
                               }
                             ]
                           }
@@ -1275,8 +1295,8 @@ PROTO Spider [
                     boundingObject Group {
                       children [
                         Transform {
-                          translation 0.044029587 -0.000015038 0
-                          children [ Box { size 0.108059173 0.020030077 0.02 } ]
+                          translation 0.044029586 -0.000015039 0
+                          children [ Box { size 0.108059172 0.020030077 0.020000001 } ]
                         }
                       ]
                     }
@@ -1288,7 +1308,7 @@ PROTO Spider [
                 children [
                   Transform {
                     translation 0.021034962 0.013336153 0.013871114
-                    children [ Box { size 0.062069923 0.046672306 0.047742229 } ]
+                    children [ Box { size 0.062069924 0.046672306 0.047742229 } ]
                   }
                 ]
               }
@@ -1303,20 +1323,8 @@ PROTO Spider [
         children [
           # legn mount is fixed to body; moving links are nested below.
           Transform {
-            translation 0.182055895 0.333067652 0.16547633
-            rotation 0.377964473 0.654653671 -0.654653671 2.418858406
-            scale 0.001 0.001 0.001
-            children [
-              Shape {
-                castShadows FALSE
-                appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                geometry Mesh { url [ "../assets/cad/final_leg_base_mesh_66cb44f892cf.stl" ] }
-              }
-            ]
-          }
-          Transform {
-            translation 0.062594829 -0.032139206 0.088363686
-            rotation 0 -1 0 1.047197551
+            translation -0.029047494 0.0087 -0.010144624
+            rotation 0 1 0 0
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -1327,8 +1335,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation 0.070906986 8.881160846 0.122838383
-            rotation -0.774596669 -0.447213596 -0.447213596 1.823476582
+            translation 0.004964548 8.922000052 -0.000105815
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -1339,8 +1347,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation 0.101018725 -0.040839206 0.157253838
-            rotation -0.774596669 -0.447213596 -0.447213596 1.823476582
+            translation 0.049825075 0 -0.008975618
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -1351,8 +1359,8 @@ PROTO Spider [
             ]
           }
           Transform {
-            translation 0.101018725 -0.040839206 0.157253838
-            rotation -0.774596669 -0.447213596 -0.447213596 1.823476582
+            translation 0.049825075 0 -0.008975618
+            rotation -1 0 0 1.570796327
             scale 0.001 0.001 0.001
             children [
               Shape {
@@ -1370,7 +1378,21 @@ PROTO Spider [
             ]
             endPoint Solid {
               name "legn_coxa_solid"
+              translation 0 0 0
+              rotation 0 1 0 0
               children [
+                Transform {
+                  translation 0.097464548 0.373906858 -0.07504462
+                  rotation 0 0.707106781 0.707106781 3.141592654
+                  scale 0.001 0.001 0.001
+                  children [
+                    Shape {
+                      castShadows FALSE
+                      appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                      geometry Mesh { url [ "../assets/cad/final_leg_base_mesh_66cb44f892cf.stl" ] }
+                    }
+                  ]
+                }
                 Transform {
                   translation 0.052214548 -0.002375188 0.019042229
                   rotation -0.577350269 -0.577350269 0.577350269 2.094395102
@@ -1384,7 +1406,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.042175738 0.031636854 -8.894257825
+                  translation 0.042175737 0.031636854 -8.894257825
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -1396,7 +1418,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.051045541 0.076497382 0.027742229
+                  translation 0.051045541 0.076497381 0.027742229
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -1408,7 +1430,7 @@ PROTO Spider [
                   ]
                 }
                 Transform {
-                  translation 0.051045541 0.076497382 0.027742229
+                  translation 0.051045541 0.076497381 0.027742229
                   rotation 0.707106781 0.707106781 0 3.141592654
                   scale 0.001 0.001 0.001
                   children [
@@ -1420,17 +1442,18 @@ PROTO Spider [
                   ]
                 }
                 HingeJoint {
-                  jointParameters HingeJointParameters { anchor 0.042069923 0.026672306 0.027742229 axis 0 0 1 minStop -1.570796327 maxStop 1.570796327 }
+                  jointParameters HingeJointParameters { anchor 0.042069923 0.026672306 0.02774223 axis 0 0 1 minStop -1.570796327 maxStop 1.570796327 }
                   device [
                     RotationalMotor { name "legn_femur_motor" maxTorque IS jointTorque minPosition -1.570796327 maxPosition 1.570796327 }
                     PositionSensor { name "legn_femur_sensor" }
                   ]
                   endPoint Solid {
                     name "legn_femur_solid"
-                    translation 0.042069923 0.026672306 0.027742229
+                    translation 0.042069923 0.026672306 0.02774223
+                    rotation 0 0 -1 0.48869219
                     children [
                       Transform {
-                        translation 0.044014625 0.141385607 -0.029515794
+                        translation 0.044014625 0.141385607 -0.029515795
                         rotation 0 0.707106781 0.707106781 3.141592654
                         scale 0.001 0.001 0.001
                         children [
@@ -1438,30 +1461,6 @@ PROTO Spider [
                             castShadows FALSE
                             appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
                             geometry Mesh { url [ "../assets/cad/final_mid_leg_mesh_300a224a7f01.stl" ] }
-                          }
-                        ]
-                      }
-                      Transform {
-                        translation 0.117106667 0.010114548 -0.0087
-                        rotation 0 0.707106781 0.707106781 3.141592654
-                        scale 0.001 0.001 0.001
-                        children [
-                          Shape {
-                            castShadows FALSE
-                            appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                            geometry Mesh { url [ "../assets/cad/rsd3230_govde_body1_d3834e3a484c.stl" ] }
-                          }
-                        ]
-                      }
-                      Transform {
-                        translation 0.083094624 0.000075739 -8.922000054
-                        rotation 0 1 0 3.141592654
-                        scale 0.001 0.001 0.001
-                        children [
-                          Shape {
-                            castShadows FALSE
-                            appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
-                            geometry Mesh { url [ "../assets/cad/servo_support_bracket_mesh_e5a97ae67089.stl" ] }
                           }
                         ]
                       }
@@ -1490,18 +1489,19 @@ PROTO Spider [
                         ]
                       }
                       HingeJoint {
-                        jointParameters HingeJointParameters { anchor 0.088059173 -0.000030077 0 axis 0 0 -1 minStop 0 maxStop 2.268928028 }
+                        jointParameters HingeJointParameters { anchor 0.088059172 -0.000030077 0 axis 0 0 -1 minStop 0 maxStop 2.268928028 }
                         device [
                           RotationalMotor { name "legn_tibia_motor" maxTorque IS jointTorque minPosition 0 maxPosition 2.268928028 }
                           PositionSensor { name "legn_tibia_sensor" }
                         ]
                         endPoint Solid {
                           name "legn_tibia_solid"
-                          translation 0.088059173 -0.000030077 0
+                          translation 0.088059172 -0.000030077 0
+                          rotation 0 0 1 2.00712864
                           contactMaterial "spider_foot"
                           children [
                             Transform {
-                              translation -0.165124892 0.175293415 -0.027997676
+                              translation -0.165124891 0.175293415 -0.027997676
                               rotation 0.577350269 -0.577350269 0.577350269 2.094395102
                               scale 0.001 0.001 0.001
                               children [
@@ -1512,12 +1512,36 @@ PROTO Spider [
                                 }
                               ]
                             }
+                            Transform {
+                              translation 0.029047494 0.010144625 -0.0087
+                              rotation 0 0.707106781 0.707106781 3.141592654
+                              scale 0.001 0.001 0.001
+                              children [
+                                Shape {
+                                  castShadows FALSE
+                                  appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                                  geometry Mesh { url [ "../assets/cad/rsd3230_govde_body1_d3834e3a484c.stl" ] }
+                                }
+                              ]
+                            }
+                            Transform {
+                              translation -0.004964548 0.000105815 -8.922000055
+                              rotation 0 1 0 3.141592654
+                              scale 0.001 0.001 0.001
+                              children [
+                                Shape {
+                                  castShadows FALSE
+                                  appearance PBRAppearance { baseColor 0.22 0.24 0.28 roughness 0.55 metalness 0.25 }
+                                  geometry Mesh { url [ "../assets/cad/servo_support_bracket_mesh_e5a97ae67089.stl" ] }
+                                }
+                              ]
+                            }
                           ]
                           boundingObject Group {
                             children [
                               Transform {
-                                translation 0.085678721 -0.008603293 -0.015873838
-                                children [ Box { size 0.189357443 0.035206585 0.049747676 } ]
+                                translation 0.029932306 -0.008603293 -0.011248838
+                                children [ Box { size 0.077864612 0.035206585 0.040497677 } ]
                               }
                             ]
                           }
@@ -1528,8 +1552,8 @@ PROTO Spider [
                     boundingObject Group {
                       children [
                         Transform {
-                          translation 0.044029587 -0.000015038 0
-                          children [ Box { size 0.108059173 0.020030077 0.02 } ]
+                          translation 0.044029586 -0.000015039 0
+                          children [ Box { size 0.108059172 0.020030077 0.02 } ]
                         }
                       ]
                     }
@@ -1540,8 +1564,8 @@ PROTO Spider [
               boundingObject Group {
                 children [
                   Transform {
-                    translation 0.021034962 0.013336153 0.013871114
-                    children [ Box { size 0.062069923 0.046672306 0.047742229 } ]
+                    translation 0.021034962 0.013336153 0.013871115
+                    children [ Box { size 0.062069923 0.046672306 0.04774223 } ]
                   }
                 ]
               }

@@ -211,7 +211,7 @@ class VirtualSpider:
             if len(lengths) != 3 or any(value <= 0 for value in lengths):
                 raise ValueError(f"{name} leg_lengths_mm must contain three positive values")
         self.legs = {
-            name: SpiderLeg(name, *per_leg_lengths[name])
+            name: SpiderLeg(name, *per_leg_lengths[name], pin_list=None)
             for name in LEG_NAMES
         }
         self.gait = Tripot_gait(use_hardware_batch=False)
@@ -278,7 +278,7 @@ class VirtualSpider:
                 self.gait.reset_turn_phase()
             self.gait.turn_step(
                 list(self.legs.values()),
-                turn_ratio=command.turn,
+                turn_ratio=-command.turn,
                 max_angle=abs(turn_angle),
                 T=80.0 + 70.0 * command.speed,
                 body_height=-125.0 + 45.0 * command.height,
