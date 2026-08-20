@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "spider_geometry.schema.json",
+  "title": "Fusion-derived Webots spider geometry",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "source",
+    "coordinate_system",
+    "tolerances",
+    "mapping",
+    "reset_angles_deg",
+    "joint_limits_deg",
+    "assets",
+    "fusion_assembly",
+    "body",
+    "legs",
+    "world"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "source": {
+      "type": "object",
+      "required": ["document", "lineage", "version", "fusion_build", "archive_sha256_expected", "documents"]
+    },
+    "coordinate_system": {
+      "type": "object",
+      "required": ["fusion_api_length", "manifest_length", "mesh_length", "webots_length", "fusion_to_webots_xyz", "fusion_to_webots_matrix"]
+    },
+    "tolerances": {
+      "type": "object",
+      "required": ["attachment_mm", "attachment_deg", "mesh_quantization_mm", "planar_fit_mm", "planar_fit_deg"]
+    },
+    "mapping": {
+      "type": "object",
+      "required": ["body_occurrence", "legs", "tripod_a", "tripod_b"]
+    },
+    "reset_angles_deg": {
+      "type": "array",
+      "prefixItems": [{"const": 0.0}, {"const": 28.0}, {"const": 115.0}],
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "joint_limits_deg": { "type": "object" },
+    "assets": { "type": "array", "minItems": 1 },
+    "fusion_assembly": {
+      "type": "object",
+      "required": ["occurrences", "visual_parts", "joints", "rigid_groups"]
+    },
+    "body": { "type": "object" },
+    "legs": { "type": "array" },
+    "world": { "type": "object" }
+  },
+  "additionalProperties": false
+}

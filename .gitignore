@@ -4,3 +4,4 @@ __pycache__/
 *.gif
 *.py[cod]
 webots/worlds/.*.wbproj
+webots/cad/.staging/

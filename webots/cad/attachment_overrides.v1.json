@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "source_lineage": "zyUEBEY-SrODxrte3NrQMw",
+  "body_occurrence": "Hex base-smaller:1",
+  "review": {
+    "status": "approved",
+    "reviewer": "independent cad_snapshot_audit agent",
+    "evidence": "All 18 joint roles, canonical signs, visual coverage, contradictory rigid-group exclusion, and ambiguous servo adapter ownership were checked against fusion_snapshot.v1.json."
+  },
+  "leg_occurrences": {
+    "legi": "legAssemble:1",
+    "legj": "legAssemble:2",
+    "legn": "legAssemble:3",
+    "legl": "legAssemble:4",
+    "legk": "legAssemble:5",
+    "legm": "legAssemble:6"
+  },
+  "joint_roles": {
+    "legi": {
+      "coxa": {"assembly_context": "legAssemble:1", "joint_name": "Revolute 2", "occurrence_one": "legAssemble:1+Final leg base:1", "occurrence_two": "legAssemble:1+SERVO RSD3230:1+ara:1"},
+      "femur": {"assembly_context": "legAssemble:1", "joint_name": "Revolute 6", "occurrence_one": "legAssemble:1+Final mid leg:1", "occurrence_two": "legAssemble:1+SERVO RSD3230:2+RSD3230 govde:1"},
+      "tibia": {"assembly_context": "legAssemble:1", "joint_name": "Revolute 5", "occurrence_one": "legAssemble:1+SERVO RSD3230:3+RSD3230 govde:1", "occurrence_two": "legAssemble:1+Final mid leg:1"}
+    },
+    "legj": {
+      "coxa": {"assembly_context": "legAssemble:2", "joint_name": "Revolute 2", "occurrence_one": "legAssemble:2+Final leg base:1", "occurrence_two": "legAssemble:2+SERVO RSD3230:1+ara:1"},
+      "femur": {"assembly_context": "legAssemble:2", "joint_name": "Revolute 6", "occurrence_one": "legAssemble:2+Final mid leg:1", "occurrence_two": "legAssemble:2+SERVO RSD3230:2+RSD3230 govde:1"},
+      "tibia": {"assembly_context": "legAssemble:2", "joint_name": "Revolute 5", "occurrence_one": "legAssemble:2+SERVO RSD3230:3+RSD3230 govde:1", "occurrence_two": "legAssemble:2+Final mid leg:1"}
+    },
+    "legn": {
+      "coxa": {"assembly_context": "legAssemble:3", "joint_name": "Revolute 2", "occurrence_one": "legAssemble:3+Final leg base:1", "occurrence_two": "legAssemble:3+SERVO RSD3230:1+ara:1"},
+      "femur": {"assembly_context": "legAssemble:3", "joint_name": "Revolute 6", "occurrence_one": "legAssemble:3+Final mid leg:1", "occurrence_two": "legAssemble:3+SERVO RSD3230:2+RSD3230 govde:1"},
+      "tibia": {"assembly_context": "legAssemble:3", "joint_name": "Revolute 5", "occurrence_one": "legAssemble:3+SERVO RSD3230:3+RSD3230 govde:1", "occurrence_two": "legAssemble:3+Final mid leg:1"}
+    },
+    "legl": {
+      "coxa": {"assembly_context": "legAssemble:4", "joint_name": "Revolute 2", "occurrence_one": "legAssemble:4+Final leg base:1", "occurrence_two": "legAssemble:4+SERVO RSD3230:1+ara:1"},
+      "femur": {"assembly_context": "legAssemble:4", "joint_name": "Revolute 6", "occurrence_one": "legAssemble:4+Final mid leg:1", "occurrence_two": "legAssemble:4+SERVO RSD3230:2+RSD3230 govde:1"},
+      "tibia": {"assembly_context": "legAssemble:4", "joint_name": "Revolute 5", "occurrence_one": "legAssemble:4+SERVO RSD3230:3+RSD3230 govde:1", "occurrence_two": "legAssemble:4+Final mid leg:1"}
+    },
+    "legk": {
+      "coxa": {"assembly_context": "legAssemble:5", "joint_name": "Revolute 2", "occurrence_one": "legAssemble:5+Final leg base:1", "occurrence_two": "legAssemble:5+SERVO RSD3230:1+ara:1"},
+      "femur": {"assembly_context": "legAssemble:5", "joint_name": "Revolute 6", "occurrence_one": "legAssemble:5+Final mid leg:1", "occurrence_two": "legAssemble:5+SERVO RSD3230:2+RSD3230 govde:1"},
+      "tibia": {"assembly_context": "legAssemble:5", "joint_name": "Revolute 5", "occurrence_one": "legAssemble:5+SERVO RSD3230:3+RSD3230 govde:1", "occurrence_two": "legAssemble:5+Final mid leg:1"}
+    },
+    "legm": {
+      "coxa": {"assembly_context": "legAssemble:6", "joint_name": "Revolute 2", "occurrence_one": "legAssemble:6+Final leg base:1", "occurrence_two": "legAssemble:6+SERVO RSD3230:1+ara:1"},
+      "femur": {"assembly_context": "legAssemble:6", "joint_name": "Revolute 6", "occurrence_one": "legAssemble:6+Final mid leg:1", "occurrence_two": "legAssemble:6+SERVO RSD3230:2+RSD3230 govde:1"},
+      "tibia": {"assembly_context": "legAssemble:6", "joint_name": "Revolute 5", "occurrence_one": "legAssemble:6+SERVO RSD3230:3+RSD3230 govde:1", "occurrence_two": "legAssemble:6+Final mid leg:1"}
+    }
+  },
+  "rigid_group_assignments": {
+    "legi": {
+      "mount": ["legAssemble:1+SERVO RSD3230:1+RSD3230 govde:1", "legAssemble:1+SERVO RSD3230:1+Servo_support_bracket:1", "legAssemble:1+SERVO RSD3230:1+ara:1"],
+      "coxa": ["legAssemble:1+Final leg base:1", "legAssemble:1+SERVO RSD3230:2+RSD3230 govde:1", "legAssemble:1+SERVO RSD3230:2+Servo_support_bracket:1", "legAssemble:1+SERVO RSD3230:2+ara:1"],
+      "femur": ["legAssemble:1+Final mid leg:1", "legAssemble:1+SERVO RSD3230:3+ara:1"],
+      "tibia": ["legAssemble:1+Final_leg_tip:1", "legAssemble:1+SERVO RSD3230:3+RSD3230 govde:1", "legAssemble:1+SERVO RSD3230:3+Servo_support_bracket:1"]
+    },
+    "legj": {
+      "mount": ["legAssemble:2+SERVO RSD3230:1+RSD3230 govde:1", "legAssemble:2+SERVO RSD3230:1+Servo_support_bracket:1", "legAssemble:2+SERVO RSD3230:1+ara:1"],
+      "coxa": ["legAssemble:2+Final leg base:1", "legAssemble:2+SERVO RSD3230:2+RSD3230 govde:1", "legAssemble:2+SERVO RSD3230:2+Servo_support_bracket:1", "legAssemble:2+SERVO RSD3230:2+ara:1"],
+      "femur": ["legAssemble:2+Final mid leg:1", "legAssemble:2+SERVO RSD3230:3+ara:1"],
+      "tibia": ["legAssemble:2+Final_leg_tip:1", "legAssemble:2+SERVO RSD3230:3+RSD3230 govde:1", "legAssemble:2+SERVO RSD3230:3+Servo_support_bracket:1"]
+    },
+    "legn": {
+      "mount": ["legAssemble:3+SERVO RSD3230:1+RSD3230 govde:1", "legAssemble:3+SERVO RSD3230:1+Servo_support_bracket:1", "legAssemble:3+SERVO RSD3230:1+ara:1"],
+      "coxa": ["legAssemble:3+Final leg base:1", "legAssemble:3+SERVO RSD3230:2+RSD3230 govde:1", "legAssemble:3+SERVO RSD3230:2+Servo_support_bracket:1", "legAssemble:3+SERVO RSD3230:2+ara:1"],
+      "femur": ["legAssemble:3+Final mid leg:1", "legAssemble:3+SERVO RSD3230:3+ara:1"],
+      "tibia": ["legAssemble:3+Final_leg_tip:1", "legAssemble:3+SERVO RSD3230:3+RSD3230 govde:1", "legAssemble:3+SERVO RSD3230:3+Servo_support_bracket:1"]
+    },
+    "legl": {
+      "mount": ["legAssemble:4+SERVO RSD3230:1+RSD3230 govde:1", "legAssemble:4+SERVO RSD3230:1+Servo_support_bracket:1", "legAssemble:4+SERVO RSD3230:1+ara:1"],
+      "coxa": ["legAssemble:4+Final leg base:1", "legAssemble:4+SERVO RSD3230:2+RSD3230 govde:1", "legAssemble:4+SERVO RSD3230:2+Servo_support_bracket:1", "legAssemble:4+SERVO RSD3230:2+ara:1"],
+      "femur": ["legAssemble:4+Final mid leg:1", "legAssemble:4+SERVO RSD3230:3+ara:1"],
+      "tibia": ["legAssemble:4+Final_leg_tip:1", "legAssemble:4+SERVO RSD3230:3+RSD3230 govde:1", "legAssemble:4+SERVO RSD3230:3+Servo_support_bracket:1"]
+    },
+    "legk": {
+      "mount": ["legAssemble:5+SERVO RSD3230:1+RSD3230 govde:1", "legAssemble:5+SERVO RSD3230:1+Servo_support_bracket:1", "legAssemble:5+SERVO RSD3230:1+ara:1"],
+      "coxa": ["legAssemble:5+Final leg base:1", "legAssemble:5+SERVO RSD3230:2+RSD3230 govde:1", "legAssemble:5+SERVO RSD3230:2+Servo_support_bracket:1", "legAssemble:5+SERVO RSD3230:2+ara:1"],
+      "femur": ["legAssemble:5+Final mid leg:1", "legAssemble:5+SERVO RSD3230:3+ara:1"],
+      "tibia": ["legAssemble:5+Final_leg_tip:1", "legAssemble:5+SERVO RSD3230:3+RSD3230 govde:1", "legAssemble:5+SERVO RSD3230:3+Servo_support_bracket:1"]
+    },
+    "legm": {
+      "mount": ["legAssemble:6+SERVO RSD3230:1+RSD3230 govde:1", "legAssemble:6+SERVO RSD3230:1+Servo_support_bracket:1", "legAssemble:6+SERVO RSD3230:1+ara:1"],
+      "coxa": ["legAssemble:6+Final leg base:1", "legAssemble:6+SERVO RSD3230:2+RSD3230 govde:1", "legAssemble:6+SERVO RSD3230:2+Servo_support_bracket:1", "legAssemble:6+SERVO RSD3230:2+ara:1"],
+      "femur": ["legAssemble:6+Final mid leg:1", "legAssemble:6+SERVO RSD3230:3+ara:1"],
+      "tibia": ["legAssemble:6+Final_leg_tip:1", "legAssemble:6+SERVO RSD3230:3+RSD3230 govde:1", "legAssemble:6+SERVO RSD3230:3+Servo_support_bracket:1"]
+    }
+  },
+  "fixed_mounts": {
+    "legi": "legAssemble:1+SERVO RSD3230:1",
+    "legj": "legAssemble:2+SERVO RSD3230:1",
+    "legn": "legAssemble:3+SERVO RSD3230:1",
+    "legl": "legAssemble:4+SERVO RSD3230:1",
+    "legk": "legAssemble:5+SERVO RSD3230:1",
+    "legm": "legAssemble:6+SERVO RSD3230:1"
+  },
+  "excluded_rigid_groups": [
+    {
+      "name": "Rigid Group 2",
+      "entity_token": "/v4BAAAARlJLZXkAH4sIAAAAAAAA/zNQsFAwAEJDBSMgBrOMLIAsQwUTkIiZQsF+oU+qr1zubOVkVIu0iU8BqjBSMDZTMDdPMUkzS0zRNUhJttQ1SbE01bU0szTQNTZKNk0zNzA0tzCwBKsFmsGABsD2GSiArQNZb2FoDgDzBQ9/iAAAAA==",
+      "reason": "This single leg-1 group contains all 16 leg occurrences and contradicts the same assembly's three live revolute joints; treating it as connectivity would collapse the articulated chain."
+    }
+  ],
+  "axis_signs": {"coxa": -1, "femur": 1, "tibia": -1},
+  "foot_contacts": {
+    "legi": {"visual_occurrence": "legAssemble:1+Final_leg_tip:1", "selector": "lowest_distal_vertex_set"},
+    "legj": {"visual_occurrence": "legAssemble:2+Final_leg_tip:1", "selector": "lowest_distal_vertex_set"},
+    "legn": {"visual_occurrence": "legAssemble:3+Final_leg_tip:1", "selector": "lowest_distal_vertex_set"},
+    "legl": {"visual_occurrence": "legAssemble:4+Final_leg_tip:1", "selector": "lowest_distal_vertex_set"},
+    "legk": {"visual_occurrence": "legAssemble:5+Final_leg_tip:1", "selector": "lowest_distal_vertex_set"},
+    "legm": {"visual_occurrence": "legAssemble:6+Final_leg_tip:1", "selector": "lowest_distal_vertex_set"}
+  },
+  "reasons": {
+    "joint_roles": "Fusion uses generic Revolute 2/5/6 names; exact context and both connected occurrences lock each semantic role without relying on names alone.",
+    "rigid_groups": "Fusion contains one broad contradictory leg-1 group. The reviewed assignments instead use the three revolute boundaries, servo subassembly rigidity, Rigid Group 3 for the tip/third-servo housing, and Rigid Group 4 for each housing/bracket and the base/second-servo assembly.",
+    "adapter_ownership": "Servo-1 ara is assigned to mount and servo-3 ara to femur. Fusion has no rigid group for those adapters, so their sides are explicit reviewed topology overrides.",
+    "fixed_mounts": "The archive exposes no body-to-leg joint or grounding state. Each first servo occurrence is explicitly fixed to the body so this required attachment is visible and reviewable rather than inferred in the generator.",
+    "foot_contacts": "The Fusion model has no contact marker. The deterministic selector uses the visible Final_leg_tip geometry and is recorded explicitly instead of silently guessing a point."
+  },
+  "review_notes": [
+    "Overrides are allowed only where Fusion connectivity or contact intent is genuinely ambiguous.",
+    "Promotion is rejected until the exact entities, ownership, and selector are independently reviewed."
+  ]
+}

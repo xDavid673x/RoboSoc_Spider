@@ -1,0 +1,8 @@
+{
+  "autodeskProduct": "Fusion360",
+  "type": "script",
+  "author": "RoboSoc Spider",
+  "description": "Export a read-only CAD snapshot for the Webots spider simulator",
+  "supportedOS": "mac|windows",
+  "editEnabled": true
+}
