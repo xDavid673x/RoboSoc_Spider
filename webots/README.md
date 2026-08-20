@@ -74,16 +74,17 @@ not represented by a separate field in these worlds.
 From the repository root:
 
 ```bash
-python3 -m pytest -q \
-  tests/test_webots_kinematics.py \
-  tests/test_webots_controller.py \
-  tests/test_webots_smoke.py
+python3 tools/cad_sync.py check-generated
+python3 -m pytest -q
 ```
 
-The native smoke suite starts Webots in batch/fast mode. It loads all four
-worlds, resolves all 18 motors and sensors, checks each world's first physics
-step and configured reset transform, and checks flat-ground stand,
-forward/backward displacement, left/right yaw, stop drift, and reset state.
+`check-generated` rebuilds the attachment hierarchy from the raw Fusion
+snapshot and enforces the 0.01 mm / 0.01 degree frame tolerance. It covers all
+91 visible CAD bodies, six fixed mount branches, 18 parent-local hinge anchors,
+and the reset-zero transform for every joint. The native smoke suite starts
+Webots in batch/fast mode. It loads all four worlds, resolves all 18 motors and
+sensors, checks each world's first physics step and configured reset transform,
+and checks the command path for forward/backward, left/right, stop, and reset.
 
 Each slope world rotates and translates the initial robot pose with the terrain.
 `R` restores that world-specific pose, while the joint reset remains
@@ -91,6 +92,12 @@ Each slope world rotates and translates the initial robot pose with the terrain.
 
 ## Calibration Limits
 
+- The CAD attachment and reset-pose checks are geometric checks, not a claim
+  that the current legacy gait is dynamically calibrated. The existing
+  `SpiderLeg` gait uses its historical support pose, while the Fusion reset
+  stance is represented by `[0, 28, 115]`; the resulting physical stride can
+  be below the smoke-test displacement target until a measured stance and
+  actuator response are supplied.
 - The 10, 20, and 30 degree worlds validate loading and initial contact, not
   measured climbing performance.
 - With the provisional fixed-height gait, the 30 degree world slides downhill

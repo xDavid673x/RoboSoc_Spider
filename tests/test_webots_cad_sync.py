@@ -1,5 +1,6 @@
 import copy
 import json
+import math
 from pathlib import Path
 import struct
 
@@ -168,5 +169,75 @@ def test_fusion_exporter_declares_read_only_staging_contract():
     assert "root.allRigidGroups" in source
     assert '"webots" / "cad" / ".staging"' in source
     assert "MillimeterDistanceUnits" in source
+    assert "is_valid" in source
+    assert "healthState" not in source
     assert ".deleteMe(" not in source
     assert ".transform2 =" not in source
+
+
+def test_manifest_schema_surface_matches_committed_manifest():
+    schema = json.loads((ROOT / "webots/cad/spider_geometry.schema.json").read_text(encoding="ascii"))
+    manifest = json.loads((ROOT / "webots/cad/spider_geometry.v1.json").read_text(encoding="ascii"))
+
+    assert schema["additionalProperties"] is False
+    assert set(schema["required"]) == set(manifest)
+    assert schema["properties"]["schema_version"]["const"] == manifest["schema_version"]
+
+    for top_level_key in schema["required"]:
+        assert top_level_key in schema["properties"]
+        assert manifest[top_level_key] not in ({}, [])
+
+    nested_required = {
+        "source": {"document", "lineage", "version", "fusion_build", "archive_sha256_expected", "documents"},
+        "coordinate_system": {"fusion_api_length", "manifest_length", "mesh_length", "webots_length", "fusion_to_webots_xyz", "fusion_to_webots_matrix"},
+        "tolerances": {"attachment_mm", "attachment_deg", "mesh_quantization_mm", "planar_fit_mm", "planar_fit_deg"},
+        "mapping": {"body_occurrence", "legs", "tripod_a", "tripod_b"},
+        "fusion_assembly": {"occurrences", "visual_parts", "joints", "as_built_joints", "joint_origins", "rigid_groups"},
+        "world": {"support_minimum_reset_height_mm", "terrain_half_thickness_mm", "normal_offset_mm", "poses"},
+    }
+    for key, required in nested_required.items():
+        assert required <= set(schema["properties"][key]["required"])
+        assert required <= set(manifest[key])
+
+
+def _committed_manifest() -> dict:
+    return json.loads((ROOT / "webots/cad/spider_geometry.v1.json").read_text(encoding="ascii"))
+
+
+def test_committed_manifest_reconstructs_all_fusion_visuals_and_joints():
+    manifest = _committed_manifest()
+
+    # validate_manifest rebuilds the reset hierarchy from the raw Fusion
+    # assembly, so this exercises all 91 visual bodies and 18 joint frames.
+    cad_sync.validate_manifest(manifest)
+
+
+def test_attachment_validator_rejects_mount_drift_over_tolerance():
+    manifest = _committed_manifest()
+    mount_visual = manifest["legs"][0]["groups"]["mount"]["visuals"][0]
+    mount_visual["group_local_transform_mm"][3] += 0.011
+
+    with pytest.raises(cad_sync.ValidationError, match="local transform"):
+        cad_sync.validate_manifest(manifest)
+
+
+def test_attachment_validator_rejects_joint_zero_rotation_drift():
+    manifest = _committed_manifest()
+    joint = next(joint for joint in manifest["legs"][0]["joints"] if joint["role"] == "femur")
+    rotation_delta = cad_sync._rotation_about_axis(joint["webots_axis"], math.radians(0.02))
+    existing = cad_sync._matrix_from_flat(joint["zero_transform_parent_mm"])
+    joint["zero_transform_parent_mm"] = cad_sync._flat_from_matrix(
+        cad_sync._matmul(rotation_delta, existing)
+    )
+
+    with pytest.raises(cad_sync.ValidationError, match="zero transform"):
+        cad_sync.validate_manifest(manifest)
+
+
+def test_attachment_validator_rejects_parent_anchor_drift():
+    manifest = _committed_manifest()
+    joint = next(joint for joint in manifest["legs"][0]["joints"] if joint["role"] == "tibia")
+    joint["anchor_parent_mm"][0] += 0.011
+
+    with pytest.raises(cad_sync.ValidationError, match="parent-local anchor"):
+        cad_sync.validate_manifest(manifest)
