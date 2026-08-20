@@ -1,0 +1,41 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "SpiderLeg.proto"
+
+PROTO Spider [
+  field SFVec3f translation 0 0 0.16
+  field SFRotation rotation 0 0 1 0
+  field SFString controller "spider_controller"
+  field SFString name "spider"
+  # Provisional values: replace after measured mass/inertia and actuator limits.
+  field SFFloat bodyMass 1.5
+  field SFFloat jointTorque 2.0
+] {
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    name IS name
+    controller IS controller
+    children [
+      Shape {
+        appearance PBRAppearance {
+          baseColor 0.12 0.14 0.18
+          roughness 0.55
+          metalness 0.25
+        }
+        geometry Mesh {
+          url [ "../assets/body_hex_base.stl" ]
+          scale 0.001 0.001 0.001
+        }
+      }
+      SpiderLeg { prefix "legi" translation 0.05 0 0 rotation 0 0 1 0 jointTorque IS jointTorque }
+      SpiderLeg { prefix "legj" translation 0.05 0.04 0 rotation 0 0 1 0.674741 jointTorque IS jointTorque }
+      SpiderLeg { prefix "legk" translation -0.05 0.04 0 rotation 0 0 1 2.466852 jointTorque IS jointTorque }
+      SpiderLeg { prefix "legl" translation -0.05 0 0 rotation 0 0 1 3.141593 jointTorque IS jointTorque }
+      SpiderLeg { prefix "legm" translation -0.05 -0.04 0 rotation 0 0 1 3.816445 jointTorque IS jointTorque }
+      SpiderLeg { prefix "legn" translation 0.05 -0.04 0 rotation 0 0 1 5.608445 jointTorque IS jointTorque }
+    ]
+    boundingObject Box { size 0.22 0.14 0.04 }
+    physics Physics { mass IS bodyMass }
+  }
+}

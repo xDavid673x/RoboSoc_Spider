@@ -1,0 +1,82 @@
+#VRML_SIM R2025a utf8
+
+PROTO SpiderLeg [
+  field SFString prefix "legi"
+  field SFRotation rotation 0 0 1 0
+  field SFVec3f translation 0 0 0
+  field SFFloat jointTorque 2.0
+] {
+  Transform {
+    translation IS translation
+    rotation IS rotation
+    children [
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis 0 0 1
+          minStop -1.570796
+          maxStop 1.570796
+        }
+        device [
+          RotationalMotor { name "%{= fields.prefix.value}_coxa_motor" maxTorque IS jointTorque }
+          PositionSensor { name "%{= fields.prefix.value}_coxa_sensor" }
+        ]
+        endPoint Solid {
+          children [
+            Shape {
+              appearance PBRAppearance { baseColor 0.25 0.27 0.32 }
+              geometry Mesh { url [ "../assets/leg_coxa.stl" ] scale 0.001 0.001 0.001 }
+            }
+            HingeJoint {
+              jointParameters HingeJointParameters {
+                axis 0 1 0
+                anchor 0.0438 0 0
+                minStop -1.570796
+                maxStop 1.570796
+              }
+              device [
+                RotationalMotor { name "%{= fields.prefix.value}_femur_motor" maxTorque IS jointTorque }
+                PositionSensor { name "%{= fields.prefix.value}_femur_sensor" }
+              ]
+              endPoint Solid {
+                translation 0.0438 0 0
+                children [
+                  Shape {
+                    appearance PBRAppearance { baseColor 0.3 0.32 0.38 }
+                    geometry Mesh { url [ "../assets/leg_femur.stl" ] scale 0.001 0.001 0.001 }
+                  }
+                  HingeJoint {
+                    jointParameters HingeJointParameters {
+                      axis 0 1 0
+                      anchor 0.088 0 0
+                      minStop 0
+                      maxStop 2.268928
+                    }
+                    device [
+                      RotationalMotor { name "%{= fields.prefix.value}_tibia_motor" maxTorque IS jointTorque }
+                      PositionSensor { name "%{= fields.prefix.value}_tibia_sensor" }
+                    ]
+                    endPoint Solid {
+                      translation 0.088 0 0
+                      children [
+                        Shape {
+                          appearance PBRAppearance { baseColor 0.35 0.37 0.44 }
+                          geometry Mesh { url [ "../assets/leg_tibia.stl" ] scale 0.001 0.001 0.001 }
+                        }
+                      ]
+                      boundingObject Box { size 0.166 0.016 0.016 }
+                      physics Physics { mass 0.08 }
+                    }
+                  }
+                ]
+                boundingObject Box { size 0.088 0.018 0.018 }
+                physics Physics { mass 0.12 }
+              }
+            }
+          ]
+          boundingObject Box { size 0.0438 0.025 0.025 }
+          physics Physics { mass 0.08 }
+        }
+      }
+    ]
+  }
+}

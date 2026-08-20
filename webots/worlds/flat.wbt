@@ -1,0 +1,17 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "../protos/Spider.proto"
+
+WorldInfo { basicTimeStep 16 }
+Viewpoint {
+  position 1.2 1.1 0.85
+  orientation -0.42 0.56 0.72 2.25
+  description "Flat spider validation world"
+}
+TexturedBackground { }
+TexturedBackgroundLight { }
+Floor {
+  size 4 4
+  appearance PBRAppearance { baseColor 0.30 0.33 0.30 roughness 0.9 }
+}
+Spider { name "spider_flat" }

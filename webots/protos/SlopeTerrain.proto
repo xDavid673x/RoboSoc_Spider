@@ -1,0 +1,22 @@
+#VRML_SIM R2025a utf8
+
+PROTO SlopeTerrain [
+  field SFFloat angle 0
+  field SFVec3f size 4 4 0.1
+] {
+  Solid {
+    rotation 0 1 0 %{= fields.angle.value * 0.01745329252 }
+    children [
+      Shape {
+        appearance PBRAppearance {
+          baseColor 0.28 0.31 0.27
+          roughness 0.9
+        }
+        geometry Box { size IS size }
+      }
+    ]
+    boundingObject Box { size IS size }
+    # Provisional terrain is static; friction can be tuned with contactProperties.
+    physics NULL
+  }
+}
