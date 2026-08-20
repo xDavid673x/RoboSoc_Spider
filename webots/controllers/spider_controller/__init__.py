@@ -1,0 +1,1 @@
+"""Webots spider controller package."""
