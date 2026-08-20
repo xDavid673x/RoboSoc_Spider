@@ -16,7 +16,7 @@ WorldInfo {
 }
 Viewpoint {
   position 0.8 0.48 0.8
-  orientation -0.370487 0.916073 0.153461 0.849301
+  orientation -0.377400 0.697553 0.609089 2.816821
   description "Flat spider validation world"
   follow "spider_flat"
   followType "Tracking Shot"
