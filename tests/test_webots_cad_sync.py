@@ -213,7 +213,9 @@ def _assert_rotation_round_trips(flat: list[float]) -> None:
         for column in range(3):
             assert reconstructed[row][column] == pytest.approx(
                 original[row][column],
-                abs=1e-9,
+                # Manifest rotations are quantized to nine decimal places;
+                # compound bent-pose rotations can accumulate several ulps.
+                abs=1e-8,
             )
 
 
@@ -303,6 +305,16 @@ def test_committed_manifest_reconstructs_all_fusion_visuals_and_joints():
     # validate_manifest rebuilds the reset hierarchy from the raw Fusion
     # assembly, so this exercises all 91 visual bodies and 18 joint frames.
     cad_sync.validate_manifest(manifest)
+
+
+def test_committed_manifest_keeps_link_lengths_invariant_in_bent_reset_pose():
+    manifest = _committed_manifest()
+
+    for leg in manifest["legs"]:
+        lengths = leg["lengths_mm"]
+        assert lengths["coxa"] == pytest.approx(42.069923, abs=1e-5)
+        assert lengths["femur"] == pytest.approx(88.059172, abs=1e-5)
+        assert lengths["tibia"] == pytest.approx(164.862261, abs=1e-5)
 
 
 def test_attachment_validator_rejects_mount_drift_over_tolerance():

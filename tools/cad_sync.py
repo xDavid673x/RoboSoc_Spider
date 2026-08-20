@@ -635,6 +635,36 @@ def derive_manifest(
 
         coxa_delta = _sub(anchor_bodies["femur"], anchor_bodies["coxa"])
         femur_delta = _sub(anchor_bodies["tibia"], anchor_bodies["femur"])
+        # Project each length along its link's solved CAD direction. Static
+        # leg-frame X is valid only for a flat assembly; the authoritative
+        # reset pose can rotate the femur and tibia before export.
+        coxa_direction = _unit(
+            _transform_vector(
+                _rotation_about_axis(
+                    axes_root["coxa"],
+                    math.radians(float(joints["coxa"].get("rotation_value_deg", 0.0))),
+                ),
+                frame["x_axis"],
+            )
+        )
+        femur_direction = _unit(
+            _transform_vector(
+                _rotation_about_axis(
+                    axes_root["femur"],
+                    math.radians(float(joints["femur"].get("rotation_value_deg", 0.0))),
+                ),
+                coxa_direction,
+            )
+        )
+        tibia_direction = _unit(
+            _transform_vector(
+                _rotation_about_axis(
+                    axes_root["tibia"],
+                    math.radians(float(joints["tibia"].get("rotation_value_deg", 0.0))),
+                ),
+                femur_direction,
+            )
+        )
         tibia_bounds = group_records["tibia"]["bounds_body_mm"]
         tibia_corners = [
             [x, y, z]
@@ -658,12 +688,12 @@ def derive_manifest(
         foot_points_root = transformed_part_points(foot_part)
         foot_points_body = [_sub(point, body_center) for point in foot_points_root]
         tibia_length = max(
-            _dot(_sub(point, anchor_bodies["tibia"]), frame["x_axis"])
+            _dot(_sub(point, anchor_bodies["tibia"]), tibia_direction)
             for point in foot_points_body
         )
         lengths = {
-            "coxa": round(abs(_dot(coxa_delta, frame["x_axis"])), 6),
-            "femur": round(abs(_dot(femur_delta, frame["x_axis"])), 6),
+            "coxa": round(abs(_dot(coxa_delta, coxa_direction)), 6),
+            "femur": round(abs(_dot(femur_delta, femur_direction)), 6),
             "tibia": round(max(1.0, tibia_length), 6),
         }
         # The coxa anchor and femur anchor are not expected to share the same
