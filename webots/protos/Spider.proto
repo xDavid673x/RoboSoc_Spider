@@ -98,7 +98,7 @@ PROTO Spider [
               children [
                 Transform {
                   translation 0.097464548 0.373906858 -0.075044621
-                  rotation 0 0.707106781 0.707106781 3.141592654
+                  rotation 0 0.707106781 -0.707106781 3.141592654
                   scale 0.001 0.001 0.001
                   children [
                     Shape {
@@ -169,7 +169,7 @@ PROTO Spider [
                     children [
                       Transform {
                         translation 0.044014625 0.141385607 -0.029515794
-                        rotation 0 0.707106781 0.707106781 3.141592654
+                        rotation 0 0.707106781 -0.707106781 3.141592654
                         scale 0.001 0.001 0.001
                         children [
                           Shape {
@@ -229,7 +229,7 @@ PROTO Spider [
                             }
                             Transform {
                               translation 0.029047494 0.010144625 -0.0087
-                              rotation 0 0.707106781 0.707106781 3.141592654
+                              rotation 0 0.707106781 -0.707106781 3.141592654
                               scale 0.001 0.001 0.001
                               children [
                                 Shape {
@@ -355,7 +355,7 @@ PROTO Spider [
               children [
                 Transform {
                   translation 0.097464548 0.373906858 -0.07504462
-                  rotation 0 0.707106781 0.707106781 3.141592654
+                  rotation 0 0.707106781 -0.707106781 3.141592654
                   scale 0.001 0.001 0.001
                   children [
                     Shape {
@@ -426,7 +426,7 @@ PROTO Spider [
                     children [
                       Transform {
                         translation 0.044014625 0.141385607 -0.029515795
-                        rotation 0 0.707106781 0.707106781 3.141592654
+                        rotation 0 0.707106781 -0.707106781 3.141592654
                         scale 0.001 0.001 0.001
                         children [
                           Shape {
@@ -486,7 +486,7 @@ PROTO Spider [
                             }
                             Transform {
                               translation 0.029047494 0.010144625 -0.0087
-                              rotation 0 0.707106781 0.707106781 3.141592654
+                              rotation 0 0.707106781 -0.707106781 3.141592654
                               scale 0.001 0.001 0.001
                               children [
                                 Shape {
@@ -612,7 +612,7 @@ PROTO Spider [
               children [
                 Transform {
                   translation 0.097464548 0.373906858 -0.07504462
-                  rotation 0 0.707106781 0.707106781 3.141592654
+                  rotation 0 0.707106781 -0.707106781 3.141592654
                   scale 0.001 0.001 0.001
                   children [
                     Shape {
@@ -683,7 +683,7 @@ PROTO Spider [
                     children [
                       Transform {
                         translation 0.044014625 0.141385607 -0.029515795
-                        rotation 0 0.707106781 0.707106781 3.141592654
+                        rotation 0 0.707106781 -0.707106781 3.141592654
                         scale 0.001 0.001 0.001
                         children [
                           Shape {
@@ -743,7 +743,7 @@ PROTO Spider [
                             }
                             Transform {
                               translation 0.029047494 0.010144625 -0.0087
-                              rotation 0 0.707106781 0.707106781 3.141592654
+                              rotation 0 0.707106781 -0.707106781 3.141592654
                               scale 0.001 0.001 0.001
                               children [
                                 Shape {
@@ -869,7 +869,7 @@ PROTO Spider [
               children [
                 Transform {
                   translation 0.097464547 0.373906858 -0.07504462
-                  rotation 0 0.707106781 0.707106781 3.141592654
+                  rotation 0 0.707106781 -0.707106781 3.141592654
                   scale 0.001 0.001 0.001
                   children [
                     Shape {
@@ -940,7 +940,7 @@ PROTO Spider [
                     children [
                       Transform {
                         translation 0.044014624 0.141385607 -0.029515795
-                        rotation 0 0.707106781 0.707106781 3.141592654
+                        rotation 0 0.707106781 -0.707106781 3.141592654
                         scale 0.001 0.001 0.001
                         children [
                           Shape {
@@ -1000,7 +1000,7 @@ PROTO Spider [
                             }
                             Transform {
                               translation 0.029047494 0.010144625 -0.0087
-                              rotation 0 0.707106781 0.707106781 3.141592654
+                              rotation 0 0.707106781 -0.707106781 3.141592654
                               scale 0.001 0.001 0.001
                               children [
                                 Shape {
@@ -1126,7 +1126,7 @@ PROTO Spider [
               children [
                 Transform {
                   translation 0.097464548 0.373906858 -0.07504462
-                  rotation 0 0.707106781 0.707106781 3.141592654
+                  rotation 0 0.707106781 -0.707106781 3.141592654
                   scale 0.001 0.001 0.001
                   children [
                     Shape {
@@ -1197,7 +1197,7 @@ PROTO Spider [
                     children [
                       Transform {
                         translation 0.044014625 0.141385607 -0.029515794
-                        rotation 0 0.707106781 0.707106781 3.141592654
+                        rotation 0 0.707106781 -0.707106781 3.141592654
                         scale 0.001 0.001 0.001
                         children [
                           Shape {
@@ -1257,7 +1257,7 @@ PROTO Spider [
                             }
                             Transform {
                               translation 0.029047494 0.010144625 -0.0087
-                              rotation 0 0.707106781 0.707106781 3.141592654
+                              rotation 0 0.707106781 -0.707106781 3.141592654
                               scale 0.001 0.001 0.001
                               children [
                                 Shape {
@@ -1383,7 +1383,7 @@ PROTO Spider [
               children [
                 Transform {
                   translation 0.097464548 0.373906858 -0.07504462
-                  rotation 0 0.707106781 0.707106781 3.141592654
+                  rotation 0 0.707106781 -0.707106781 3.141592654
                   scale 0.001 0.001 0.001
                   children [
                     Shape {
@@ -1454,7 +1454,7 @@ PROTO Spider [
                     children [
                       Transform {
                         translation 0.044014625 0.141385607 -0.029515795
-                        rotation 0 0.707106781 0.707106781 3.141592654
+                        rotation 0 0.707106781 -0.707106781 3.141592654
                         scale 0.001 0.001 0.001
                         children [
                           Shape {
@@ -1514,7 +1514,7 @@ PROTO Spider [
                             }
                             Transform {
                               translation 0.029047494 0.010144625 -0.0087
-                              rotation 0 0.707106781 0.707106781 3.141592654
+                              rotation 0 0.707106781 -0.707106781 3.141592654
                               scale 0.001 0.001 0.001
                               children [
                                 Shape {
