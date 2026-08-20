@@ -38,6 +38,18 @@ LEG_MOUNT_MM: dict[str, tuple[float, float, float]] = {
     "legn": (50.0, -40.0, 0.0),
 }
 
+# ``Tripot_gait``'s simulation branch assumes its matplotlib body frame.  The
+# Webots PROTO applies its own reflected Y-up mount rotations, so these inverse
+# mount angles keep every stance-foot stride parallel in the Webots body frame.
+WEBOTS_GAIT_COMPENSATION_RAD: dict[str, float] = {
+    "legi": 0.0,
+    "legj": math.pi / 4.0,
+    "legk": 3.0 * math.pi / 4.0,
+    "legl": math.pi,
+    "legm": -3.0 * math.pi / 4.0,
+    "legn": -math.pi / 4.0,
+}
+
 JOINT_LIMITS_DEG: tuple[tuple[float, float], ...] = (
     (-90.0, 90.0),
     (-90.0, 90.0),
@@ -47,6 +59,9 @@ JOINT_LIMITS_DEG: tuple[tuple[float, float], ...] = (
 DEFAULT_LEG_LENGTHS_MM = (43.8, 88.0, 166.0)
 INIT_ANGLES_DEG = (0.0, 28.0, 115.0)
 MM_TO_M = 0.001
+MAX_WALK_SPEED = 0.7
+GAIT_STEP_MIN = 20
+GAIT_STEP_MAX = 48
 
 
 def mm_to_m(value_mm: float) -> float:
@@ -79,6 +94,12 @@ def clamp_joint_angles(angles_deg: Iterable[float]) -> list[float]:
         clamp(value, lower, upper)
         for value, (lower, upper) in zip(values, JOINT_LIMITS_DEG)
     ]
+
+
+def gait_step_for_speed(speed: float) -> int:
+    normalized = clamp(speed, 0.0, 1.0)
+    step = round(GAIT_STEP_MAX - (GAIT_STEP_MAX - GAIT_STEP_MIN) * normalized)
+    return max(GAIT_STEP_MIN, min(GAIT_STEP_MAX, int(step)))
 
 
 def joint_angles_to_webots(angles_deg: Iterable[float]) -> list[float]:
@@ -139,6 +160,7 @@ class VirtualSpider:
             for name in LEG_NAMES
         }
         self.gait = Tripot_gait()
+        self.gait.anti_beta_dict = WEBOTS_GAIT_COMPENSATION_RAD.copy()
         self.last_mode = "init"
         self.last_command = Command(mode="init")
         self.reset()
@@ -146,6 +168,7 @@ class VirtualSpider:
     def reset(self) -> None:
         """Restore gait phases, pose, and virtual joint state."""
 
+        self.gait.anti_beta_dict = WEBOTS_GAIT_COMPENSATION_RAD.copy()
         self.gait.reset_walk_phase(0)
         self.gait.reset_turn_phase(0)
         for leg in self.legs.values():
@@ -172,14 +195,25 @@ class VirtualSpider:
             return
 
         if command.mode == "turn":
+            turn_angle = (10.0 + 30.0 * abs(command.turn)) * command.turn
+            compensation = (
+                math.pi - math.radians(turn_angle)
+                if command.turn > 0.0
+                else -math.radians(turn_angle)
+            )
+            self.gait.anti_beta_dict = {
+                name: compensation for name in LEG_NAMES
+            }
+            if self.last_mode != "turn":
+                self.gait.reset_turn_phase()
             self.gait.turn_step(
                 list(self.legs.values()),
                 turn_ratio=command.turn,
-                max_angle=10.0 + 30.0 * abs(command.turn),
+                max_angle=abs(turn_angle),
                 T=80.0 + 70.0 * command.speed,
                 body_height=-125.0 + 45.0 * command.height,
                 A=20.0 + 20.0 * command.speed,
-                step=max(8, round(32.0 - 24.0 * command.speed)),
+                step=gait_step_for_speed(command.speed),
                 xpos=130.0 + 20.0 * command.height,
             )
             self.last_mode = "turn"
@@ -187,15 +221,19 @@ class VirtualSpider:
             return
 
         if command.mode == "walk":
+            self.gait.anti_beta_dict = WEBOTS_GAIT_COMPENSATION_RAD.copy()
             magnitude = math.hypot(command.vx, command.vy)
             if magnitude >= 0.03:
+                walk_speed = min(command.speed, MAX_WALK_SPEED)
+                if self.last_mode != "walk":
+                    self.gait.reset_walk_phase()
                 self.gait.walk_step(
                     list(self.legs.values()),
                     angle=math.degrees(math.atan2(command.vy, command.vx)),
-                    T=max(40.0, (80.0 + 130.0 * min(command.speed, 0.7)) * min(1.0, magnitude)),
+                    T=max(40.0, (80.0 + 130.0 * walk_speed) * min(1.0, magnitude)),
                     body_height=-125.0 + 45.0 * command.height,
-                    A=15.0 + 20.0 * command.speed,
-                    step=max(8, round(32.0 - 24.0 * command.speed)),
+                    A=15.0 + 20.0 * walk_speed,
+                    step=gait_step_for_speed(walk_speed),
                     xpos=130.0 + 20.0 * command.height,
                 )
             self.last_mode = "walk"

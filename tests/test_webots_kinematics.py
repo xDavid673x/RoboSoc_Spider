@@ -12,11 +12,13 @@ from webots.controllers.spider_controller.kinematics_adapter import (
     LEG_NAMES,
     TRIPOD_A,
     TRIPOD_B,
+    WEBOTS_GAIT_COMPENSATION_RAD,
     Command,
     VirtualSpider,
     body_mount_to_webots,
     clamp_joint_angles,
     deg_to_rad,
+    gait_step_for_speed,
     joint_angles_to_webots,
     mm_to_m,
 )
@@ -78,6 +80,25 @@ def test_tripod_constants_partition_all_six_leg_names():
     assert TRIPOD_B == {"legj", "legl", "legn"}
 
 
+def test_webots_mount_compensation_and_gait_rate_match_the_body_frame():
+    spider = VirtualSpider()
+
+    assert spider.gait.anti_beta_dict == pytest.approx(
+        {
+            "legi": 0.0,
+            "legj": math.pi / 4.0,
+            "legk": 3.0 * math.pi / 4.0,
+            "legl": math.pi,
+            "legm": -3.0 * math.pi / 4.0,
+            "legn": -math.pi / 4.0,
+        }
+    )
+    assert WEBOTS_GAIT_COMPENSATION_RAD == spider.gait.anti_beta_dict
+    assert gait_step_for_speed(0.0) == 48
+    assert gait_step_for_speed(0.7) == 28
+    assert gait_step_for_speed(1.0) == 20
+
+
 def test_virtual_spider_creates_six_named_legs_with_three_joints_each():
     spider = VirtualSpider()
 
@@ -105,7 +126,7 @@ def test_virtual_spider_reset_restores_init_angles_and_gait_state():
         assert angles == pytest.approx(INIT_ANGLES_DEG)
 
 
-def test_virtual_spider_positive_and_negative_turns_mirror_reference_tip_direction():
+def test_virtual_spider_positive_and_negative_turns_mirror_tangential_motion():
     positive = VirtualSpider()
     negative = VirtualSpider()
 
@@ -114,11 +135,10 @@ def test_virtual_spider_positive_and_negative_turns_mirror_reference_tip_directi
 
     positive_tip = positive.tip_positions_mm()["legi"]
     negative_tip = negative.tip_positions_mm()["legi"]
-    mount_x = 130.0
-
-    assert positive_tip[0] > mount_x
-    assert negative_tip[0] < mount_x
-    assert positive_tip[1] == pytest.approx(negative_tip[1])
+    assert positive_tip[0] == pytest.approx(negative_tip[0])
+    assert positive_tip[1] == pytest.approx(-negative_tip[1])
+    assert positive_tip[1] > 0.0
+    assert positive_tip[2] == pytest.approx(negative_tip[2])
 
 
 def test_adapter_imports_without_servo2040_hardware_module():

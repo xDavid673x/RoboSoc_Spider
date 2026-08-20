@@ -19,6 +19,7 @@ PROTO SpiderLeg [
       HingeJoint {
         jointParameters HingeJointParameters {
           axis 0 1 0
+          position 0
           minStop -1.570796
           maxStop 1.570796
         }
@@ -44,6 +45,7 @@ PROTO SpiderLeg [
               jointParameters HingeJointParameters {
                 axis 0 0 1
                 anchor 0.0438 0 0
+                position 0.488692
                 minStop -1.570796
                 maxStop 1.570796
               }
@@ -54,6 +56,7 @@ PROTO SpiderLeg [
               endPoint Solid {
                 name IS femurMotorName
                 translation 0.0438 0 0
+                rotation 0 0 1 0.488692
                 children [
                   Transform {
                     translation 0.044 0 -0.01414
@@ -69,6 +72,7 @@ PROTO SpiderLeg [
                     jointParameters HingeJointParameters {
                       axis 0 0 -1
                       anchor 0.088 0 0
+                      position 2.007129
                       minStop 0
                       maxStop 2.268928
                     }
@@ -79,6 +83,7 @@ PROTO SpiderLeg [
                     endPoint Solid {
                       name IS tibiaMotorName
                       translation 0.088 0 0
+                      rotation 0 0 -1 2.007129
                       children [
                         Transform {
                           translation 0.055 0 -0.0175

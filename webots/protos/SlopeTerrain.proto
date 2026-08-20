@@ -3,7 +3,7 @@
 
 PROTO SlopeTerrain [
   field SFFloat angle 0
-  field SFVec3f size 4 4 0.1
+  field SFVec3f size 4 0.1 4
   field SFVec3f translation 0 -0.05 0
 ] {
   Solid {

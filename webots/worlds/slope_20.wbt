@@ -4,6 +4,7 @@ EXTERNPROTO "../protos/Spider.proto"
 EXTERNPROTO "../protos/SlopeTerrain.proto"
 
 WorldInfo {
+  coordinateSystem "NUE"
   basicTimeStep 20
   contactProperties [
     ContactProperties {
@@ -21,5 +22,5 @@ Viewpoint {
 }
 Background { skyColor [ 0.08 0.10 0.14 ] }
 DirectionalLight { direction -0.4 -0.6 -1 castShadows TRUE }
-SlopeTerrain { angle 20 size 4 4 0.1 }
+SlopeTerrain { angle 20 }
 Spider { name "spider_slope_20" }

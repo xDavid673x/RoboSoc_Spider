@@ -3,6 +3,7 @@
 EXTERNPROTO "../protos/Spider.proto"
 
 WorldInfo {
+  coordinateSystem "NUE"
   basicTimeStep 20
   contactProperties [
     ContactProperties {
@@ -26,10 +27,10 @@ Solid {
   children [
     Shape {
       appearance PBRAppearance { baseColor 0.30 0.33 0.30 roughness 0.9 }
-      geometry Box { size 4 4 0.1 }
+      geometry Box { size 4 0.1 4 }
     }
   ]
-  boundingObject Box { size 4 4 0.1 }
+  boundingObject Box { size 4 0.1 4 }
   physics NULL
 }
 Spider { name "spider_flat" }
