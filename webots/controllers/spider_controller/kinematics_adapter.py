@@ -159,7 +159,7 @@ class VirtualSpider:
             name: SpiderLeg(name, *lengths)
             for name in LEG_NAMES
         }
-        self.gait = Tripot_gait()
+        self.gait = Tripot_gait(use_hardware_batch=False)
         self.gait.anti_beta_dict = WEBOTS_GAIT_COMPENSATION_RAD.copy()
         self.last_mode = "init"
         self.last_command = Command(mode="init")

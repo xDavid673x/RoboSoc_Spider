@@ -6,7 +6,12 @@ try:
 except ImportError:
     is_simulate = True
 class Tripot_gait:
-    def __init__(self, beta_ang = pi/4):
+    def __init__(self, beta_ang = pi/4, use_hardware_batch = None):
+        self.use_hardware_batch = (
+            not is_simulate
+            if use_hardware_batch is None
+            else bool(use_hardware_batch)
+        )
         self.legs_ROT_dict = {
             'legi' : self.rotation_matrix(0),
             'legl' : self.rotation_matrix(pi),
@@ -138,13 +143,13 @@ class Tripot_gait:
         angles_by_leg = []
         for leg in legs:
             angles_by_leg.append((leg, leg.calculate_inverse_angles(targets[leg.name])))
-        if not is_simulate:
+        if self.use_hardware_batch:
             servo_control.begin_batch()
         try:
             for leg, angles in angles_by_leg:
                 leg.set_angles(angles)
         finally:
-            if not is_simulate:
+            if self.use_hardware_batch:
                 servo_control.end_batch()
         for leg, _ in angles_by_leg:
             leg.forwardKinematics()

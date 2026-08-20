@@ -248,3 +248,61 @@ def test_adapter_imports_without_servo2040_hardware_module():
     )
 
     assert result.returncode == 0, result.stderr
+
+
+def test_virtual_gait_never_calls_importable_hardware_batch_hooks():
+    adapter_path = (
+        Path(__file__).resolve().parents[1]
+        / "webots"
+        / "controllers"
+        / "spider_controller"
+    )
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(adapter_path)
+    probe = """
+import sys
+import types
+
+calls = []
+servo_control = types.ModuleType("servo_control")
+servo_control.begin_batch = lambda: calls.append("begin")
+servo_control.end_batch = lambda: calls.append("end")
+sys.modules["servo_control"] = servo_control
+
+import kinematics_adapter
+
+spider = kinematics_adapter.VirtualSpider()
+spider.command({"mode": "walk", "vx": 1.0, "speed": 1.0})
+assert spider.gait.use_hardware_batch is False
+assert calls == []
+
+from tripot_gait import Tripot_gait
+
+class FakeLeg:
+    name = "legi"
+
+    def calculate_inverse_angles(self, target):
+        return [0.0, 0.0, 0.0]
+
+    def set_angles(self, angles):
+        return angles
+
+    def forwardKinematics(self):
+        return [[0.0, 0.0, 0.0]] * 4
+
+hardware_gait = Tripot_gait()
+hardware_gait._apply_targets([FakeLeg()], {"legi": [0.0, 0.0, 0.0]})
+assert hardware_gait.use_hardware_batch is True
+assert calls == ["begin", "end"]
+"""
+
+    result = subprocess.run(
+        [sys.executable, "-c", probe],
+        cwd=adapter_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
