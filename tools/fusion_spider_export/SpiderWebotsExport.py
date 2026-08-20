@@ -381,6 +381,36 @@ def _rigid_group_record(group) -> dict[str, object]:
     }
 
 
+def _rigid_group_records(root) -> list[dict[str, object]]:
+    """Collect rigid-group provenance while tolerating invalid Fusion proxies."""
+
+    try:
+        groups = list(root.allRigidGroups)
+    except Exception as error:  # Fusion may reject a stale group collection wholesale.
+        return [
+            {
+                "name": "<unavailable>RigidbodyCollection",
+                "entity_token": f"<unavailable:{type(error).__name__}>",
+                "assembly_context": "<root>",
+                "occurrences": [],
+            }
+        ]
+    records: list[dict[str, object]] = []
+    for group in groups:
+        try:
+            records.append(_rigid_group_record(group))
+        except Exception as error:  # Keep the diagnostic without dropping the export.
+            records.append(
+                {
+                    "name": "<unavailable>RigidGroup",
+                    "entity_token": f"<unavailable:{type(error).__name__}>",
+                    "assembly_context": "<root>",
+                    "occurrences": [],
+                }
+            )
+    return sorted(records, key=lambda item: str(item.get("name", "")))
+
+
 def _export_snapshot(app, design: adsk.fusion.Design, repo_root: Path) -> Path:
     document = app.activeDocument
     data_file = getattr(document, "dataFile", None)
@@ -501,7 +531,7 @@ def _export_snapshot(app, design: adsk.fusion.Design, repo_root: Path) -> Path:
         _joint_origin_record(origin)
         for origin in sorted(root.allJointOrigins, key=lambda item: item.name)
     ]
-    rigid_groups = [_rigid_group_record(group) for group in sorted(root.allRigidGroups, key=lambda item: item.name)]
+    rigid_groups = _rigid_group_records(root)
 
     source_documents = {}
     for occurrence in root.allOccurrences:
