@@ -36,7 +36,8 @@ PROTO SpiderLeg [
               scale 0.001 0.001 0.001
               children [
                 Shape {
-                  appearance PBRAppearance { baseColor 0.25 0.27 0.32 }
+                  castShadows FALSE
+                  appearance PBRAppearance { baseColor 0.62 0.22 0.18 }
                   geometry Mesh { url [ "../assets/leg_coxa.stl" ] }
                 }
               ]
@@ -63,7 +64,8 @@ PROTO SpiderLeg [
                     scale 0.001 0.001 0.001
                     children [
                       Shape {
-                        appearance PBRAppearance { baseColor 0.3 0.32 0.38 }
+                        castShadows FALSE
+                        appearance PBRAppearance { baseColor 0.20 0.42 0.62 }
                         geometry Mesh { url [ "../assets/leg_femur.stl" ] }
                       }
                     ]
@@ -91,7 +93,8 @@ PROTO SpiderLeg [
                           scale 0.001 0.001 0.001
                           children [
                             Shape {
-                              appearance PBRAppearance { baseColor 0.35 0.37 0.44 }
+                              castShadows FALSE
+                              appearance PBRAppearance { baseColor 0.62 0.66 0.72 }
                               geometry Mesh { url [ "../assets/leg_tibia.stl" ] }
                             }
                           ]

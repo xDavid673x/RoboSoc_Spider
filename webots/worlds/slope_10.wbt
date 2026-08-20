@@ -16,11 +16,19 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  position 1.35 1.15 0.95
-  orientation -0.42 0.56 0.72 2.25
+  position 0.8 0.48 0.8
+  orientation -0.370487 0.916073 0.153461 0.849301
   description "10 degree slope validation world"
+  follow "spider_slope_10"
+  followType "Tracking Shot"
+  followSmoothness 0.15
 }
-Background { skyColor [ 0.08 0.10 0.14 ] }
-DirectionalLight { direction -0.4 -0.6 -1 castShadows TRUE }
+Background { skyColor [ 0.18 0.22 0.30 ] }
+DirectionalLight {
+  ambientIntensity 0.6
+  direction -0.4 -1 -0.3
+  intensity 1.2
+  castShadows TRUE
+}
 SlopeTerrain { angle 10 }
 Spider { name "spider_slope_10" }
