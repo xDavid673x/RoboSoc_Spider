@@ -262,7 +262,7 @@ def _joint_record(joint) -> dict[str, object]:
         "occurrence_two": occurrence_two.fullPathName if occurrence_two else "<root>",
         "is_flipped": bool(joint.isFlipped),
         "is_valid": bool(joint.isValid),
-        "health_source": "AsBuiltJoint API does not expose healthState",
+        "validity_source": "Joint.isValid",
     }
     for side in ("one", "two"):
         matrix = getattr(joint, f"geometry{side.title()}Transform", None)
@@ -309,7 +309,8 @@ def _as_built_joint_record(joint) -> dict[str, object]:
         "assembly_context": context.fullPathName if context else "<root>",
         "occurrence_one": _join_occurrence_path(context, occurrence_one),
         "occurrence_two": _join_occurrence_path(context, occurrence_two),
-        "health": int(joint.healthState),
+        "is_valid": bool(joint.isValid),
+        "validity_source": "AsBuiltJoint.isValid",
         "fusion_transform_context_cm": _fusion_matrix_cm(transform),
         "fusion_transform_root_cm": fusion_root_transform,
         "webots_transform_mm": webots_root_transform,
@@ -518,6 +519,7 @@ def _export_snapshot(app, design: adsk.fusion.Design, repo_root: Path) -> Path:
             "fusion_snapshot_length": "millimeter",
             "manifest_length": "millimeter",
             "mesh_length": "millimeter",
+            "webots_length": "meter",
             "webots_runtime_length": "meter",
             "millimeter_to_webots": 0.001,
             "fusion_to_webots_xyz": ["x", "y", "z"],

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from functools import lru_cache
 import hashlib
 import json
 import math
@@ -105,6 +106,26 @@ def _mesh_metadata(path: Path) -> dict[str, Any]:
             "max": [round(max(point[axis] for point in points), 6) for axis in range(3)],
         },
     }
+
+
+@lru_cache(maxsize=32)
+def _mesh_points(path_string: str) -> tuple[tuple[float, float, float], ...]:
+    """Read STL vertices once for orientation-independent CAD measurements."""
+
+    path = Path(path_string)
+    payload = path.read_bytes()
+    _require(len(payload) >= 84, f"STL is too short: {path}")
+    triangle_count = struct.unpack_from("<I", payload, 80)[0]
+    expected_size = 84 + triangle_count * 50
+    _require(len(payload) == expected_size, f"expected binary STL ({expected_size} bytes), got {len(payload)}: {path}")
+    points: list[tuple[float, float, float]] = []
+    for index in range(triangle_count):
+        values = struct.unpack_from("<12fH", payload, 84 + index * 50)
+        points.extend(
+            tuple(float(values[3 + vertex * 3 + axis]) for axis in range(3))
+            for vertex in range(3)
+        )
+    return tuple(points)
 
 
 def _require(condition: bool, message: str) -> None:
@@ -365,22 +386,30 @@ def _joint_records_for_leg(snapshot: dict[str, Any], leg_occurrence: str) -> dic
     return {role: by_name[fusion_name] for role, fusion_name in JOINT_ROLE_NAMES.items()}
 
 
-def _group_for_part(part: dict[str, Any]) -> str | None:
-    occurrence = str(part["occurrence"])
-    relative = occurrence.split("+", 1)[1] if "+" in occurrence else occurrence
-    if relative.startswith("Final leg base:1") or relative.startswith("SERVO RSD3230:1+"):
-        return "mount"
-    if relative.startswith("SERVO RSD3230:2+"):
-        return "coxa"
-    if relative.startswith("Final mid leg:1") or relative.startswith("SERVO RSD3230:3+"):
-        return "femur"
-    if relative.startswith("Final_leg_tip:1"):
-        return "tibia"
-    return None
+def _override_group_map(overrides: dict[str, Any], leg_name: str) -> dict[str, str]:
+    """Return the reviewed exact-occurrence ownership map for one leg."""
+
+    assignments = overrides.get("rigid_group_assignments", {}).get(leg_name)
+    _require(isinstance(assignments, dict), f"{leg_name} has no reviewed rigid-group assignments")
+    result: dict[str, str] = {}
+    for group_name in ("mount", "coxa", "femur", "tibia"):
+        values = assignments.get(group_name)
+        _require(isinstance(values, list) and values, f"{leg_name} {group_name} override is empty")
+        for occurrence in values:
+            occurrence_name = str(occurrence)
+            _require(occurrence_name not in result, f"{leg_name} occurrence assigned to multiple groups: {occurrence_name}")
+            result[occurrence_name] = group_name
+    return result
 
 
-def _leg_parts(snapshot: dict[str, Any], leg_occurrence: str) -> dict[str, list[dict[str, Any]]]:
+def _leg_parts(
+    snapshot: dict[str, Any],
+    leg_occurrence: str,
+    leg_name: str,
+    overrides: dict[str, Any],
+) -> dict[str, list[dict[str, Any]]]:
     groups = {name: [] for name in ("mount", "coxa", "femur", "tibia")}
+    ownership = _override_group_map(overrides, leg_name)
     seen: set[tuple[str, str, str]] = set()
     for part in snapshot["fusion_assembly"]["visual_parts"]:
         occurrence = str(part["occurrence"])
@@ -389,9 +418,10 @@ def _leg_parts(snapshot: dict[str, Any], leg_occurrence: str) -> dict[str, list[
         key = (occurrence, str(part["component"]), str(part["body"]))
         _require(key not in seen, f"duplicate leg visual body: {key}")
         seen.add(key)
-        group = _group_for_part(part)
-        _require(group is not None, f"unresolved rigid group for {key}")
+        group = ownership.get(occurrence)
+        _require(group is not None, f"unresolved reviewed rigid group for {key}")
         groups[group].append(part)
+    _require(set(ownership) == {part["occurrence"] for part in snapshot["fusion_assembly"]["visual_parts"] if str(part["occurrence"]).startswith(leg_occurrence + "+")}, f"{leg_name} ownership override does not cover exactly the visible leg occurrences")
     for group, values in groups.items():
         _require(values, f"{leg_occurrence} group {group} has no visual bodies")
     return groups
@@ -448,16 +478,21 @@ def _line_distance(point_a: list[float], axis_a: list[float], point_b: list[floa
     return abs(_dot(delta, cross_axes)) / denominator
 
 
-def _part_manifest(part: dict[str, Any], body_center: list[float], group_origin: list[float]) -> dict[str, Any]:
+def _part_manifest(
+    part: dict[str, Any],
+    body_center: list[float],
+    group_frame_body: list[list[float]],
+) -> dict[str, Any]:
     root_matrix = _matrix_from_flat(part["webots_transform_mm"])
     body_centered = _matmul(_translation_matrix([-value for value in body_center]), root_matrix)
-    group_local = _matmul(_translation_matrix([-value for value in group_origin]), body_centered)
+    group_local = _matmul(_inverse_rigid(group_frame_body), body_centered)
     return {
         "occurrence": part["occurrence"],
         "component": part["component"],
         "body": part["body"],
         "asset": part["asset"],
         "asset_path": next_asset_path_placeholder(part["asset"]),
+        "assembly_transform_body_mm": _flat_from_matrix(body_centered),
         "body_centered_transform_mm": _flat_from_matrix(body_centered),
         "group_local_transform_mm": _flat_from_matrix(group_local),
         "assembly_bounds_mm": _relative_bounds(part["assembly_bounds_mm"], body_center),
@@ -468,7 +503,11 @@ def next_asset_path_placeholder(asset_id: str) -> str:
     return asset_id
 
 
-def derive_manifest(snapshot: dict[str, Any], overrides: dict[str, Any] | None = None) -> dict[str, Any]:
+def derive_manifest(
+    snapshot: dict[str, Any],
+    overrides: dict[str, Any] | None = None,
+    snapshot_path: Path | None = None,
+) -> dict[str, Any]:
     overrides = overrides or _load_overrides()
     parts = snapshot["fusion_assembly"]["visual_parts"]
     body_parts = [part for part in parts if part.get("occurrence") == snapshot["mapping"]["body_occurrence"]]
@@ -476,13 +515,23 @@ def derive_manifest(snapshot: dict[str, Any], overrides: dict[str, Any] | None =
     body_bounds_root = _bounds_union(part["assembly_bounds_mm"] for part in body_parts)
     body_center = _bounds_center(body_bounds_root)
     asset_by_id = {asset["id"]: asset for asset in snapshot["assets"]}
+    asset_files = {
+        asset_id: _asset_path(asset, snapshot_path or COMMITTED_SNAPSHOT)
+        for asset_id, asset in asset_by_id.items()
+    }
 
-    def part_record(part: dict[str, Any], group_origin: list[float]) -> dict[str, Any]:
-        record = _part_manifest(part, body_center, group_origin)
+    def transformed_part_points(part: dict[str, Any]) -> list[list[float]]:
+        matrix = _matrix_from_flat(part["webots_transform_mm"])
+        return [_transform_point(matrix, point) for point in _mesh_points(str(asset_files[part["asset"]]))]
+
+    identity_frame = _translation_matrix([0.0, 0.0, 0.0])
+
+    def part_record(part: dict[str, Any], group_frame_body: list[list[float]]) -> dict[str, Any]:
+        record = _part_manifest(part, body_center, group_frame_body)
         record["asset_path"] = asset_by_id[part["asset"]]["path"]
         return record
 
-    body_visuals = [part_record(part, [0.0, 0.0, 0.0]) for part in body_parts]
+    body_visuals = [part_record(part, identity_frame) for part in body_parts]
     legs: list[dict[str, Any]] = []
     all_owned_parts = {(part["occurrence"], part["component"], part["body"]) for part in body_parts}
     min_support_y = min(part["assembly_bounds_mm"]["min"][1] - body_center[1] for part in parts)
@@ -495,55 +544,88 @@ def derive_manifest(snapshot: dict[str, Any], overrides: dict[str, Any] | None =
         frame = _local_frame(anchors_root["coxa"], axes_root["femur"], body_center)
         leg_origin_root = anchors_root["coxa"]
         leg_origin_body = _round_list(_sub(leg_origin_root, body_center), 6)
-        root_to_leg = _basis_inverse(frame, leg_origin_root)
-        leg_to_body = _matmul(_translation_matrix([-value for value in body_center]), _basis_matrix(frame, leg_origin_root))
+        # All four rigid groups use the same CAD-derived leg orientation at
+        # the documented reset pose.  Their origins are the adjacent joint
+        # anchors, so every visual transform is an exact rigid-frame local
+        # transform and every hinge can apply its reset zero offset.
+        leg_to_body = _basis_matrix(frame, leg_origin_body)
+        body_to_leg = _inverse_rigid(leg_to_body)
+        anchor_bodies = {
+            role: _round_list(_sub(anchors_root[role], body_center), 6)
+            for role in JOINT_ORDER
+        }
+        anchors_local = {
+            role: _round_list(_transform_point(body_to_leg, anchor_bodies[role]), 6)
+            for role in JOINT_ORDER
+        }
+        _require(max(abs(value) for value in anchors_local["coxa"]) <= 0.01, f"{leg_name} coxa anchor is not at its frame origin")
 
         joint_manifest = []
         command_signs: dict[str, int] = {}
         for role in JOINT_ORDER:
-            anchor_local = _transform_point(root_to_leg, anchors_root[role])
-            axis_local = _unit(_transform_vector(root_to_leg, axes_root[role]))
+            anchor_local = anchors_local[role]
+            axis_local = _unit(_transform_vector(body_to_leg, axes_root[role]))
             sign = _axis_alignment(axis_local, WEBOTS_CANONICAL_AXES[role], f"{leg_name} {role}")
             command_signs[role] = sign
-            reset_angle = RESET_ANGLES_DEG[JOINT_ORDER.index(role)] * sign
+            reset_angle = RESET_ANGLES_DEG[JOINT_ORDER.index(role)]
+            parent_group = {"coxa": "mount", "femur": "coxa", "tibia": "femur"}[role]
+            child_group = {"coxa": "coxa", "femur": "femur", "tibia": "tibia"}[role]
+            parent_origin = anchors_local["coxa" if role == "coxa" else ("femur" if role == "tibia" else "coxa")]
+            parent_anchor = [
+                0.0,
+                0.0,
+                0.0,
+            ] if role == "coxa" else _sub(anchor_local, parent_origin)
+            cad_transform_parent = _translation_matrix(anchor_local if role == "coxa" else parent_anchor)
             zero_transform = _matmul(
-                _rotate_about(_sub(anchors_root[role], body_center), WEBOTS_CANONICAL_AXES[role], math.radians(-reset_angle)),
-                _translation_matrix([0.0, 0.0, 0.0]),
+                _rotate_about(parent_anchor, WEBOTS_CANONICAL_AXES[role], math.radians(-reset_angle)),
+                cad_transform_parent,
             )
             joint_manifest.append(
                 {
                     "role": role,
                     "fusion_name": joints[role]["name"],
                     "entity_token": joints[role]["entity_token"],
-                    "parent_group": {"coxa": "mount", "femur": "coxa", "tibia": "femur"}[role],
-                    "child_group": {"coxa": "coxa", "femur": "femur", "tibia": "tibia"}[role],
+                    "parent_group": parent_group,
+                    "child_group": child_group,
                     "anchor_root_mm": _round_list(anchors_root[role], 6),
-                    "anchor_body_mm": _round_list(_sub(anchors_root[role], body_center), 6),
+                    "anchor_body_mm": anchor_bodies[role],
                     "anchor_leg_mm": _round_list(anchor_local, 6),
+                    "anchor_parent_mm": _round_list(parent_anchor, 6),
                     "fusion_axis_root": _round_list(axes_root[role]),
                     "axis_leg": _round_list(axis_local),
                     "webots_axis": list(WEBOTS_CANONICAL_AXES[role]),
                     "command_sign": sign,
                     "reset_angle_deg": RESET_ANGLES_DEG[JOINT_ORDER.index(role)],
                     "webots_reset_angle_deg": reset_angle,
+                    "fusion_reset_angle_deg": round(reset_angle * sign, 9),
                     "limits_deg": list(JOINT_LIMITS_DEG[role]),
-                    "zero_transform_body_mm": _flat_from_matrix(zero_transform),
+                    "cad_transform_parent_mm": _flat_from_matrix(cad_transform_parent),
+                    "zero_transform_parent_mm": _flat_from_matrix(zero_transform),
+                    "zero_transform_body_mm": _flat_from_matrix(
+                        _matmul(leg_to_body, zero_transform)
+                    ),
                     "provenance": "Fusion as-built joint",
                 }
             )
 
-        leg_groups = _leg_parts(snapshot, leg_occurrence)
+        leg_groups = _leg_parts(snapshot, leg_occurrence, leg_name, overrides)
         group_origins = {
-            "mount": [0.0, 0.0, 0.0],
-            "coxa": _sub(anchors_root["coxa"], body_center),
-            "femur": _sub(anchors_root["femur"], body_center),
-            "tibia": _sub(anchors_root["tibia"], body_center),
+            "mount": anchor_bodies["coxa"],
+            "coxa": anchor_bodies["coxa"],
+            "femur": anchor_bodies["femur"],
+            "tibia": anchor_bodies["tibia"],
+        }
+        group_frames = {
+            group_name: _basis_matrix(frame, group_origins[group_name])
+            for group_name in group_origins
         }
         group_records = {}
         for group_name, group_parts in leg_groups.items():
             group_records[group_name] = {
                 "origin_body_mm": _round_list(group_origins[group_name], 6),
-                "visuals": [part_record(part, group_origins[group_name]) for part in group_parts],
+                "frame_body_mm": _flat_from_matrix(group_frames[group_name]),
+                "visuals": [part_record(part, group_frames[group_name]) for part in group_parts],
                 "bounds_body_mm": _relative_bounds(_bounds_union(part["assembly_bounds_mm"] for part in group_parts), body_center),
             }
             for part in group_parts:
@@ -551,40 +633,64 @@ def derive_manifest(snapshot: dict[str, Any], overrides: dict[str, Any] | None =
                 _require(key not in all_owned_parts, f"duplicate body ownership: {key}")
                 all_owned_parts.add(key)
 
+        coxa_delta = _sub(anchor_bodies["femur"], anchor_bodies["coxa"])
+        femur_delta = _sub(anchor_bodies["tibia"], anchor_bodies["femur"])
+        tibia_bounds = group_records["tibia"]["bounds_body_mm"]
+        tibia_corners = [
+            [x, y, z]
+            for x in (tibia_bounds["min"][0], tibia_bounds["max"][0])
+            for y in (tibia_bounds["min"][1], tibia_bounds["max"][1])
+            for z in (tibia_bounds["min"][2], tibia_bounds["max"][2])
+        ]
+        foot_override = overrides.get("foot_contacts", {}).get(leg_name)
+        foot_part = None
+        if isinstance(foot_override, dict):
+            selector_occurrence = foot_override.get("visual_occurrence")
+            foot_part = next(
+                (part for part in leg_groups["tibia"] if part.get("occurrence") == selector_occurrence),
+                None,
+            )
+        if foot_part is None:
+            foot_part = next(
+                (part for part in leg_groups["tibia"] if str(part.get("component")) == "Final_leg_tip"),
+                leg_groups["tibia"][0],
+            )
+        foot_points_root = transformed_part_points(foot_part)
+        foot_points_body = [_sub(point, body_center) for point in foot_points_root]
+        tibia_length = max(
+            _dot(_sub(point, anchor_bodies["tibia"]), frame["x_axis"])
+            for point in foot_points_body
+        )
         lengths = {
-            "coxa": round(_line_distance(anchors_root["coxa"], axes_root["coxa"], anchors_root["femur"], axes_root["femur"]), 6),
-            "femur": round(_line_distance(anchors_root["femur"], axes_root["femur"], anchors_root["tibia"], axes_root["tibia"]), 6),
-            "tibia": round(max(1.0, _bounds_size(group_records["tibia"]["bounds_body_mm"])[0]), 6),
+            "coxa": round(abs(_dot(coxa_delta, frame["x_axis"])), 6),
+            "femur": round(abs(_dot(femur_delta, frame["x_axis"])), 6),
+            "tibia": round(max(1.0, tibia_length), 6),
         }
         # The coxa anchor and femur anchor are not expected to share the same
         # leg-frame Z coordinate in this CAD: the coxa joint is a vertical line.
         # Planarity for IK is the residual after fitting hinge axis directions
         # to the canonical 3R model, i.e. unwanted local-axis components.
-        planar_residual_mm = round(
-            max(
-                abs(_unit(_transform_vector(root_to_leg, axes_root["coxa"]))[0]),
-                abs(_unit(_transform_vector(root_to_leg, axes_root["coxa"]))[2]),
-                abs(_unit(_transform_vector(root_to_leg, axes_root["femur"]))[0]),
-                abs(_unit(_transform_vector(root_to_leg, axes_root["femur"]))[1]),
-                abs(_unit(_transform_vector(root_to_leg, axes_root["tibia"]))[0]),
-                abs(_unit(_transform_vector(root_to_leg, axes_root["tibia"]))[1]),
-            ),
-            6,
+        planar_axis_residual = max(
+            abs(_unit(_transform_vector(body_to_leg, axes_root["coxa"]))[0]),
+            abs(_unit(_transform_vector(body_to_leg, axes_root["coxa"]))[2]),
+            abs(_unit(_transform_vector(body_to_leg, axes_root["femur"]))[0]),
+            abs(_unit(_transform_vector(body_to_leg, axes_root["femur"]))[1]),
+            abs(_unit(_transform_vector(body_to_leg, axes_root["tibia"]))[0]),
+            abs(_unit(_transform_vector(body_to_leg, axes_root["tibia"]))[1]),
         )
+        planar_residual_deg = round(math.degrees(math.asin(min(1.0, planar_axis_residual))), 6)
+        planar_residual_mm = round(abs(_dot(femur_delta, frame["z_axis"])), 6)
         _require(planar_residual_mm <= 0.25, f"{leg_name} planar-fit residual exceeds 0.25 mm: {planar_residual_mm}")
-        foot_override = overrides.get("foot_contacts", {}).get(leg_name)
+        _require(planar_residual_deg <= 0.25, f"{leg_name} planar-fit angular residual exceeds 0.25 deg: {planar_residual_deg}")
         if isinstance(foot_override, list) and len(foot_override) == 3:
-            foot_contact = foot_override
+            foot_contact = [float(value) for value in foot_override]
+        elif foot_part is not None:
+            lowest_y = min(point[1] for point in foot_points_body)
+            lowest = [point for point in foot_points_body if math.isclose(point[1], lowest_y, abs_tol=0.001)]
+            foot_contact = max(lowest, key=lambda point: _dot(_sub(point, leg_origin_body), frame["x_axis"]))
         else:
-            tibia_bounds = group_records["tibia"]["bounds_body_mm"]
-            corners = [
-                [x, y, z]
-                for x in (tibia_bounds["min"][0], tibia_bounds["max"][0])
-                for y in (tibia_bounds["min"][1], tibia_bounds["max"][1])
-                for z in (tibia_bounds["min"][2], tibia_bounds["max"][2])
-            ]
-            lowest_y = min(corner[1] for corner in corners)
-            lowest = [corner for corner in corners if math.isclose(corner[1], lowest_y, abs_tol=1e-9)]
+            lowest_y = min(corner[1] for corner in tibia_corners)
+            lowest = [corner for corner in tibia_corners if math.isclose(corner[1], lowest_y, abs_tol=1e-9)]
             foot_contact = max(lowest, key=lambda corner: _dot(_sub(corner, leg_origin_body), frame["x_axis"]))
         legs.append(
             {
@@ -598,6 +704,7 @@ def derive_manifest(snapshot: dict[str, Any], overrides: dict[str, Any] | None =
                 "gait_compensation_rad": round(-math.atan2(frame["x_axis"][2], frame["x_axis"][0]), 9),
                 "lengths_mm": lengths,
                 "planar_fit_residual_mm": planar_residual_mm,
+                "planar_fit_residual_deg": planar_residual_deg,
                 "foot_contact_body_mm": _round_list(foot_contact, 6),
                 "groups": group_records,
                 "joints": joint_manifest,
@@ -610,15 +717,20 @@ def derive_manifest(snapshot: dict[str, Any], overrides: dict[str, Any] | None =
     worlds = {}
     for angle in (0, 10, 20, 30):
         radians = math.radians(angle)
+        # SlopeTerrain rotates about Webots +Z.  Rotate the body-support
+        # offset about the same terrain centre, rather than projecting it onto
+        # an unrelated world axis.
+        normal_offset_x = -normal_offset_mm * math.sin(radians)
+        normal_offset_y = normal_offset_mm * math.cos(radians)
         worlds[f"slope_{angle}" if angle else "flat"] = {
             "terrain_angle_deg": angle,
             "terrain_center_mm": [0.0, GROUND_CENTER_Y_MM, 0.0],
             "initial_translation_m": [
+                round(normal_offset_x / 1000.0, 9),
+                round((GROUND_CENTER_Y_MM + normal_offset_y) / 1000.0, 9),
                 0.0,
-                round((GROUND_CENTER_Y_MM + normal_offset_mm * math.cos(radians)) / 1000.0, 9),
-                round((normal_offset_mm * math.sin(radians)) / 1000.0, 9),
             ],
-            "initial_rotation": [0.0, 1.0, 0.0, 0.0],
+            "initial_rotation": [0.0, 1.0, 0.0, 0.0] if angle == 0 else [0.0, 0.0, 1.0, round(radians, 9)],
         }
 
     return {
@@ -668,6 +780,7 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
         _require(len(leg.get("joints", [])) == 3, f"{leg.get('name')} must have three joints")
         for joint in leg["joints"]:
             role = joint["role"]
+            _require(role in JOINT_ORDER, f"{leg['name']} has an unknown joint role: {role}")
             _require(joint["limits_deg"] == list(JOINT_LIMITS_DEG[role]), f"{leg['name']} {role} limit drift")
             _require(joint["webots_axis"] == list(WEBOTS_CANONICAL_AXES[role]), f"{leg['name']} {role} axis drift")
             _require(joint["command_sign"] in (-1, 1), f"{leg['name']} {role} invalid command sign")
@@ -681,6 +794,275 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
         _require(key not in owned, f"duplicate body visual ownership: {key}")
         owned.add(key)
     _require(len(owned) == len(manifest["fusion_assembly"]["visual_parts"]), "manifest does not own every visual part")
+    _validate_attachment_frames(manifest)
+
+
+def _rotation_only(rows: list[list[float]]) -> list[list[float]]:
+    result = [row[:] for row in rows]
+    for row in range(3):
+        result[row][3] = 0.0
+    result[3] = [0.0, 0.0, 0.0, 1.0]
+    return result
+
+
+def _rotation_error_deg(expected: list[list[float]], actual: list[list[float]]) -> float:
+    expected_rotation = [[expected[row][column] for column in range(3)] for row in range(3)]
+    actual_rotation = [[actual[row][column] for column in range(3)] for row in range(3)]
+    relative_trace = sum(
+        sum(expected_rotation[index][row] * actual_rotation[index][row] for index in range(3))
+        for row in range(3)
+    )
+    cosine = max(-1.0, min(1.0, (relative_trace - 1.0) / 2.0))
+    return math.degrees(math.acos(cosine))
+
+
+def _attachment_error(
+    expected: list[list[float]],
+    actual: list[list[float]],
+) -> tuple[float, float]:
+    expected_translation = [expected[row][3] for row in range(3)]
+    actual_translation = [actual[row][3] for row in range(3)]
+    translation_error = max(
+        abs(expected_translation[index] - actual_translation[index])
+        for index in range(3)
+    )
+    return translation_error, _rotation_error_deg(expected, actual)
+
+
+def _require_attachment(
+    expected: list[list[float]],
+    actual: list[list[float]],
+    context: str,
+) -> None:
+    translation_error, rotation_error = _attachment_error(expected, actual)
+    _require(
+        translation_error <= 0.01 and rotation_error <= 0.01,
+        f"{context} differs from Fusion by {translation_error:.6f} mm / {rotation_error:.6f} deg",
+    )
+
+
+def _reset_endpoint_transform(joint: dict[str, Any]) -> list[list[float]]:
+    anchor = [float(value) for value in joint["anchor_parent_mm"]]
+    zero = _matrix_from_flat(joint["zero_transform_parent_mm"])
+    return _matmul(
+        _translation_matrix(anchor),
+        _matmul(
+            _rotation_about_axis(joint["webots_axis"], math.radians(joint["reset_angle_deg"])),
+            _rotation_only(zero),
+        ),
+    )
+
+
+def _validate_attachment_frames(manifest: dict[str, Any]) -> None:
+    """Rebuild the generated articulated tree and compare it with Fusion.
+
+    The raw ``fusion_assembly`` records are the source of truth here.  This is
+    intentionally separate from the generated manifest fields: changing both a
+    visual's local transform and its cached body transform must still fail.
+    """
+
+    body = manifest["body"]
+    raw_parts = manifest["fusion_assembly"]["visual_parts"]
+    raw_part_by_key = {
+        (str(part["occurrence"]), str(part["component"]), str(part["body"])): part
+        for part in raw_parts
+    }
+    _require(len(raw_part_by_key) == len(raw_parts), "Fusion visual parts contain duplicate ownership keys")
+
+    # Recompute the body-centred frame from Fusion bounds and verify every body
+    # visual against its raw assembly transform.
+    raw_body_parts = [part for part in raw_parts if part.get("occurrence") == body["occurrence"]]
+    _require(raw_body_parts, "Fusion body occurrence has no visual parts")
+    body_center = _bounds_center(_bounds_union(part["assembly_bounds_mm"] for part in raw_body_parts))
+    _require(
+        max(abs(float(body["center_root_mm"][axis]) - body_center[axis]) for axis in range(3)) <= 0.01,
+        "manifest body center differs from Fusion body bounds",
+    )
+    body_center_matrix = _translation_matrix([-value for value in body_center])
+
+    expected_visuals: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for visual in body["visuals"]:
+        key = (str(visual["occurrence"]), str(visual["component"]), str(visual["body"]))
+        _require(key in raw_part_by_key, f"manifest body visual is absent from Fusion: {key}")
+        raw = raw_part_by_key[key]
+        fusion_body = _matmul(body_center_matrix, _matrix_from_flat(raw["webots_transform_mm"]))
+        _require_attachment(
+            fusion_body,
+            _matrix_from_flat(visual["body_centered_transform_mm"]),
+            f"body visual {visual['occurrence']} transform",
+        )
+        _require_attachment(
+            fusion_body,
+            _matrix_from_flat(visual["assembly_transform_body_mm"]),
+            f"body visual {visual['occurrence']} assembly transform",
+        )
+        expected_visuals[key] = visual
+
+    group_parent = {"mount": None, "coxa": "mount", "femur": "coxa", "tibia": "femur"}
+    for leg in manifest["legs"]:
+        leg_name = str(leg["name"])
+        joints = {str(joint["role"]): joint for joint in leg["joints"]}
+        _require(set(joints) == set(JOINT_ORDER), f"{leg_name} joint roles are incomplete")
+        fusion_joints = _joint_records_for_leg(manifest, str(leg["occurrence"]))
+        anchors_root = {
+            role: _matrix_translation(fusion_joints[role]["webots_transform_mm"])
+            for role in JOINT_ORDER
+        }
+        axes_root = {
+            role: _unit(fusion_joints[role]["axis_body_webots"])
+            for role in JOINT_ORDER
+        }
+        frame = _local_frame(anchors_root["coxa"], axes_root["femur"], body_center)
+        leg_origin_body = _sub(anchors_root["coxa"], body_center)
+        expected_leg_to_body = _basis_matrix(frame, leg_origin_body)
+        leg_to_body = _matrix_from_flat(leg["leg_to_body_transform_mm"])
+        _require_attachment(expected_leg_to_body, leg_to_body, f"{leg_name} leg frame")
+        _require(
+            max(abs(float(leg["origin_body_mm"][axis]) - leg_origin_body[axis]) for axis in range(3)) <= 0.01,
+            f"{leg_name} body mount origin differs from Fusion",
+        )
+        body_to_leg = _inverse_rigid(expected_leg_to_body)
+        anchors_body = {role: _sub(anchors_root[role], body_center) for role in JOINT_ORDER}
+        anchors_local = {
+            role: _transform_point(body_to_leg, anchors_body[role])
+            for role in JOINT_ORDER
+        }
+        _require(max(abs(value) for value in anchors_local["coxa"]) <= 0.01, f"{leg_name} coxa anchor is not at its frame origin")
+
+        for role in JOINT_ORDER:
+            joint = joints[role]
+            canonical_axis = WEBOTS_CANONICAL_AXES[role]
+            axis_local = _unit(_transform_vector(body_to_leg, axes_root[role]))
+            sign = _axis_alignment(axis_local, canonical_axis, f"{leg_name} {role}")
+            expected_parent_anchor = {
+                "coxa": [0.0, 0.0, 0.0],
+                "femur": anchors_local["femur"],
+                "tibia": _sub(anchors_local["tibia"], anchors_local["femur"]),
+            }[role]
+            if role == "coxa":
+                expected_parent_anchor = [0.0, 0.0, 0.0]
+            expected_cad_transform = _translation_matrix(expected_parent_anchor)
+            reset_angle = RESET_ANGLES_DEG[JOINT_ORDER.index(role)]
+            expected_zero = _matmul(
+                _rotate_about(expected_parent_anchor, canonical_axis, math.radians(-reset_angle)),
+                expected_cad_transform,
+            )
+            _require(
+                max(abs(float(joint["anchor_root_mm"][axis]) - anchors_root[role][axis]) for axis in range(3)) <= 0.01,
+                f"{leg_name} {role} root anchor differs from Fusion",
+            )
+            _require(
+                max(abs(float(joint["anchor_body_mm"][axis]) - anchors_body[role][axis]) for axis in range(3)) <= 0.01,
+                f"{leg_name} {role} body anchor differs from Fusion",
+            )
+            _require(
+                max(abs(float(joint["anchor_leg_mm"][axis]) - anchors_local[role][axis]) for axis in range(3)) <= 0.01,
+                f"{leg_name} {role} leg anchor differs from Fusion",
+            )
+            _require(
+                max(abs(float(joint["anchor_parent_mm"][axis]) - expected_parent_anchor[axis]) for axis in range(3)) <= 0.01,
+                f"{leg_name} {role} parent-local anchor is inconsistent",
+            )
+            _require(
+                max(abs(float(joint["axis_leg"][axis]) - axis_local[axis]) for axis in range(3)) <= 1e-5,
+                f"{leg_name} {role} local axis differs from Fusion",
+            )
+            _require(joint["command_sign"] == sign, f"{leg_name} {role} command sign differs from Fusion")
+            _require(joint["reset_angle_deg"] == reset_angle, f"{leg_name} {role} reset angle drift")
+            _require(joint["webots_reset_angle_deg"] == reset_angle, f"{leg_name} {role} Webots reset angle drift")
+            _require(joint["fusion_reset_angle_deg"] == round(reset_angle * sign, 9), f"{leg_name} {role} Fusion reset angle drift")
+            _require_attachment(
+                expected_cad_transform,
+                _matrix_from_flat(joint["cad_transform_parent_mm"]),
+                f"{leg_name} {role} CAD reset anchor",
+            )
+            _require_attachment(
+                expected_zero,
+                _matrix_from_flat(joint["zero_transform_parent_mm"]),
+                f"{leg_name} {role} zero transform",
+            )
+            _require_attachment(
+                _matmul(expected_leg_to_body, expected_zero),
+                _matrix_from_flat(joint["zero_transform_body_mm"]),
+                f"{leg_name} {role} body zero transform",
+            )
+            _require_attachment(
+                expected_cad_transform,
+                _reset_endpoint_transform(joint),
+                f"{leg_name} {role} reset endpoint",
+            )
+            expected_parent_group = {
+                "coxa": "mount",
+                "femur": "coxa",
+                "tibia": "femur",
+            }[role]
+            _require(joint["parent_group"] == expected_parent_group, f"{leg_name} {role} parent group drift")
+            _require(joint["child_group"] == role, f"{leg_name} {role} child group drift")
+
+        endpoint_by_group = {
+            "mount": expected_leg_to_body,
+            "coxa": _matmul(expected_leg_to_body, _reset_endpoint_transform(joints["coxa"])),
+        }
+        endpoint_by_group["femur"] = _matmul(endpoint_by_group["coxa"], _reset_endpoint_transform(joints["femur"]))
+        endpoint_by_group["tibia"] = _matmul(endpoint_by_group["femur"], _reset_endpoint_transform(joints["tibia"]))
+        expected_group_origins = {
+            "mount": anchors_body["coxa"],
+            "coxa": anchors_body["coxa"],
+            "femur": anchors_body["femur"],
+            "tibia": anchors_body["tibia"],
+        }
+        leg_part_keys: set[tuple[str, str, str]] = set()
+        for group_name, group in leg["groups"].items():
+            _require(group_name in group_parent, f"{leg_name} has unknown group {group_name}")
+            expected_group_frame = _basis_matrix(frame, expected_group_origins[group_name])
+            _require_attachment(
+                expected_group_frame,
+                _matrix_from_flat(group["frame_body_mm"]),
+                f"{leg_name} {group_name} frame",
+            )
+            _require(
+                max(abs(float(group["origin_body_mm"][axis]) - expected_group_origins[group_name][axis]) for axis in range(3)) <= 0.01,
+                f"{leg_name} {group_name} origin differs from Fusion",
+            )
+            _require_attachment(
+                expected_group_frame,
+                endpoint_by_group[group_name],
+                f"{leg_name} {group_name} reset endpoint frame",
+            )
+            if group_name != "mount":
+                _require(group_parent[group_name] in leg["groups"], f"{leg_name} {group_name} parent group is missing")
+            for visual in group["visuals"]:
+                key = (str(visual["occurrence"]), str(visual["component"]), str(visual["body"]))
+                _require(key in raw_part_by_key, f"manifest leg visual is absent from Fusion: {key}")
+                _require(key not in expected_visuals, f"duplicate manifest visual ownership: {key}")
+                raw = raw_part_by_key[key]
+                fusion_body = _matmul(body_center_matrix, _matrix_from_flat(raw["webots_transform_mm"]))
+                _require_attachment(
+                    fusion_body,
+                    _matrix_from_flat(visual["body_centered_transform_mm"]),
+                    f"{leg_name} {group_name} visual {visual['occurrence']} transform",
+                )
+                _require_attachment(
+                    fusion_body,
+                    _matrix_from_flat(visual["assembly_transform_body_mm"]),
+                    f"{leg_name} {group_name} assembly transform {visual['occurrence']}",
+                )
+                expected_local = _matmul(_inverse_rigid(expected_group_frame), fusion_body)
+                _require_attachment(
+                    expected_local,
+                    _matrix_from_flat(visual["group_local_transform_mm"]),
+                    f"{leg_name} {group_name} local transform {visual['occurrence']}",
+                )
+                _require_attachment(
+                    fusion_body,
+                    _matmul(endpoint_by_group[group_name], _matrix_from_flat(visual["group_local_transform_mm"])),
+                    f"{leg_name} {group_name} reset placement {visual['occurrence']}",
+                )
+                expected_visuals[key] = visual
+                leg_part_keys.add(key)
+        _require(leg_part_keys, f"{leg_name} has no visual bodies")
+
+    _require(set(expected_visuals) == set(raw_part_by_key), "attachment reconstruction does not cover every Fusion visual exactly once")
 
 
 def _compare_values(path: str, expected: Any, actual: Any, errors: list[str]) -> None:
@@ -719,7 +1101,7 @@ def compare_live(staging_path: Path, committed_path: Path = COMMITTED_SNAPSHOT) 
         extra = f"\n... {len(errors) - 30} more differences" if len(errors) > 30 else ""
         raise ValidationError("live Fusion snapshot differs from committed geometry:\n" + preview + extra)
     if committed_path == COMMITTED_SNAPSHOT and COMMITTED_MANIFEST.exists():
-        manifest = derive_manifest(staged)
+        manifest = derive_manifest(staged, snapshot_path=staging_path)
         committed_manifest = _load_json(COMMITTED_MANIFEST)
         errors = []
         _compare_values("manifest", committed_manifest, manifest, errors)
@@ -831,8 +1213,18 @@ def _link_collision_between(start_mm: list[float], end_mm: list[float], thicknes
 def _group_visual_lines(leg: dict[str, Any], group_name: str, origin_leg_mm: list[float], indent: str) -> list[str]:
     lines: list[str] = []
     for visual in leg["groups"][group_name]["visuals"]:
-        lines.extend(_visual_shape_from_flat(_leg_local_visual(visual, leg, origin_leg_mm), visual["asset_path"], indent))
+        # Manifest group-local transforms already include the CAD-derived
+        # frame rotation and origin.  Reusing them here avoids applying the
+        # leg transform a second time for asymmetric mounts.
+        lines.extend(_visual_shape_from_flat(visual["group_local_transform_mm"], visual["asset_path"], indent))
     return lines
+
+
+def _joint_zero_rotation(joint: dict[str, Any]) -> str:
+    """Render the endpoint's reset-zero rotation from its parent transform."""
+
+    axis, angle = _webots_rotation_from_matrix(joint["zero_transform_parent_mm"])
+    return f"{_vec(axis)} {_fmt(angle)}"
 
 
 def _joint_device_lines(leg_name: str, role: str, min_limit: float, max_limit: float, indent: str) -> list[str]:
@@ -846,13 +1238,16 @@ def _joint_device_lines(leg_name: str, role: str, min_limit: float, max_limit: f
 
 def _generate_leg_chain(leg: dict[str, Any], indent: str = "      ") -> list[str]:
     joints = {joint["role"]: joint for joint in leg["joints"]}
-    coxa_anchor = [0.0, 0.0, 0.0]
-    femur_anchor = joints["femur"]["anchor_leg_mm"]
-    tibia_anchor = joints["tibia"]["anchor_leg_mm"]
+    coxa_anchor = joints["coxa"]["anchor_parent_mm"]
+    femur_anchor = joints["femur"]["anchor_parent_mm"]
+    tibia_anchor = joints["tibia"]["anchor_parent_mm"]
     foot = _leg_local_point(leg["foot_contact_body_mm"], leg)
-    femur_rel = _sub(femur_anchor, coxa_anchor)
-    tibia_rel = _sub(tibia_anchor, femur_anchor)
-    foot_rel = _sub(foot, tibia_anchor)
+    # Hinge anchors are parent-local.  The endpoint Solid is translated to
+    # the same anchor, while its zero rotation cancels the documented reset
+    # command so q=[0,28,115] reproduces the Fusion snapshot.
+    femur_rel = list(femur_anchor)
+    tibia_rel = list(tibia_anchor)
+    foot_rel = _sub(foot, joints["tibia"]["anchor_leg_mm"])
     lines = [
         f"{indent}Transform {{",
         f"{indent}  translation {_vec(leg['origin_body_mm'], 0.001)}",
@@ -860,8 +1255,7 @@ def _generate_leg_chain(leg: dict[str, Any], indent: str = "      ") -> list[str
         f"{indent}  children [",
         f"{indent}    # {leg['name']} mount is fixed to body; moving links are nested below.",
     ]
-    for visual in leg["groups"]["mount"]["visuals"]:
-        lines.extend(_visual_shape(visual, indent + "    "))
+    lines.extend(_group_visual_lines(leg, "mount", [0.0, 0.0, 0.0], indent + "    "))
     min_limit, max_limit = [math.radians(value) for value in joints["coxa"]["limits_deg"]]
     lines.extend(
         [
@@ -870,6 +1264,8 @@ def _generate_leg_chain(leg: dict[str, Any], indent: str = "      ") -> list[str
             *_joint_device_lines(leg["name"], "coxa", min_limit, max_limit, indent + "      "),
             f"{indent}      endPoint Solid {{",
             f"{indent}        name \"{leg['name']}_coxa_solid\"",
+            f"{indent}        translation {_vec(coxa_anchor, 0.001)}",
+            f"{indent}        rotation {_joint_zero_rotation(joints['coxa'])}",
             f"{indent}        children [",
             *_group_visual_lines(leg, "coxa", coxa_anchor, indent + "          "),
         ]
@@ -883,6 +1279,7 @@ def _generate_leg_chain(leg: dict[str, Any], indent: str = "      ") -> list[str
             f"{indent}            endPoint Solid {{",
             f"{indent}              name \"{leg['name']}_femur_solid\"",
             f"{indent}              translation {_vec(femur_rel, 0.001)}",
+            f"{indent}              rotation {_joint_zero_rotation(joints['femur'])}",
             f"{indent}              children [",
             *_group_visual_lines(leg, "femur", femur_anchor, indent + "                "),
         ]
@@ -896,6 +1293,7 @@ def _generate_leg_chain(leg: dict[str, Any], indent: str = "      ") -> list[str
             f"{indent}                  endPoint Solid {{",
             f"{indent}                    name \"{leg['name']}_tibia_solid\"",
             f"{indent}                    translation {_vec(tibia_rel, 0.001)}",
+            f"{indent}                    rotation {_joint_zero_rotation(joints['tibia'])}",
             f"{indent}                    contactMaterial \"spider_foot\"",
             f"{indent}                    children [",
             *_group_visual_lines(leg, "tibia", tibia_anchor, indent + "                      "),
@@ -1047,7 +1445,7 @@ def generate_worlds(manifest: dict[str, Any]) -> dict[str, str]:
 def promote(staging_path: Path) -> None:
     snapshot = validate_snapshot(staging_path)
     overrides = _load_overrides()
-    manifest = derive_manifest(snapshot, overrides)
+    manifest = derive_manifest(snapshot, overrides, staging_path)
     validate_manifest(manifest)
     COMMITTED_ASSETS.mkdir(parents=True, exist_ok=True)
     expected_names = {Path(str(asset["path"])).name for asset in snapshot["assets"]}
@@ -1071,7 +1469,7 @@ def promote(staging_path: Path) -> None:
 
 def check_generated() -> None:
     snapshot = validate_snapshot(COMMITTED_SNAPSHOT)
-    manifest = derive_manifest(snapshot)
+    manifest = derive_manifest(snapshot, snapshot_path=COMMITTED_SNAPSHOT)
     committed_manifest = _load_json(COMMITTED_MANIFEST)
     validate_manifest(committed_manifest)
     errors: list[str] = []
@@ -1109,7 +1507,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.snapshot == COMMITTED_SNAPSHOT and COMMITTED_MANIFEST.exists():
                 validate_manifest(_load_json(COMMITTED_MANIFEST))
             else:
-                validate_manifest(derive_manifest(snapshot))
+                validate_manifest(derive_manifest(snapshot, snapshot_path=args.snapshot))
         elif args.command == "promote-snapshot":
             promote(args.staging)
         elif args.command == "compare-live":

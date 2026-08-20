@@ -11,11 +11,13 @@
     "mapping",
     "reset_angles_deg",
     "joint_limits_deg",
+    "dynamics_estimates",
     "assets",
     "fusion_assembly",
     "body",
     "legs",
-    "world"
+    "world",
+    "attachment_overrides"
   ],
   "properties": {
     "schema_version": { "const": 1 },
@@ -42,14 +44,22 @@
       "maxItems": 3
     },
     "joint_limits_deg": { "type": "object" },
+    "dynamics_estimates": {
+      "type": "object",
+      "required": ["total_robot_mass_kg", "body_mass_kg", "each_leg_link_mass_kg", "foot_friction_static", "foot_friction_dynamic", "motor_torque_limit_nm", "note"]
+    },
     "assets": { "type": "array", "minItems": 1 },
     "fusion_assembly": {
       "type": "object",
-      "required": ["occurrences", "visual_parts", "joints", "rigid_groups"]
+      "required": ["occurrences", "visual_parts", "joints", "as_built_joints", "joint_origins", "rigid_groups"]
     },
     "body": { "type": "object" },
-    "legs": { "type": "array" },
-    "world": { "type": "object" }
+    "legs": { "type": "array", "minItems": 6, "maxItems": 6 },
+    "world": {
+      "type": "object",
+      "required": ["support_minimum_reset_height_mm", "terrain_half_thickness_mm", "normal_offset_mm", "poses"]
+    },
+    "attachment_overrides": { "type": "object" }
   },
   "additionalProperties": false
 }
