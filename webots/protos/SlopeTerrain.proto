@@ -1,11 +1,15 @@
 #VRML_SIM R2025a utf8
+# template language: javascript
 
 PROTO SlopeTerrain [
   field SFFloat angle 0
   field SFVec3f size 4 4 0.1
+  field SFVec3f translation 0 -0.05 0
 ] {
   Solid {
-    rotation 0 1 0 %{= fields.angle.value * 0.01745329252 }
+    translation IS translation
+    rotation 0 0 1 %<= fields.angle.value * 0.01745329252 >%
+    contactMaterial "ground"
     children [
       Shape {
         appearance PBRAppearance {
@@ -16,7 +20,8 @@ PROTO SlopeTerrain [
       }
     ]
     boundingObject Box { size IS size }
-    # Provisional terrain is static; friction can be tuned with contactProperties.
+    # Static/dynamic foot friction estimates are 0.8/0.6. Webots exposes the
+    # Coulomb coefficient here; the dynamic estimate remains a calibration note.
     physics NULL
   }
 }

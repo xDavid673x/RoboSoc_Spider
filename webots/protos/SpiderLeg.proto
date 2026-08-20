@@ -1,10 +1,16 @@
 #VRML_SIM R2025a utf8
 
 PROTO SpiderLeg [
-  field SFString prefix "legi"
+  field SFString coxaMotorName "legi_coxa_motor"
+  field SFString coxaSensorName "legi_coxa_sensor"
+  field SFString femurMotorName "legi_femur_motor"
+  field SFString femurSensorName "legi_femur_sensor"
+  field SFString tibiaMotorName "legi_tibia_motor"
+  field SFString tibiaSensorName "legi_tibia_sensor"
   field SFRotation rotation 0 0 1 0
   field SFVec3f translation 0 0 0
-  field SFFloat jointTorque 2.0
+  field SFFloat jointTorque 2.5
+  field SFFloat linkMass 0.1
 ] {
   Transform {
     translation IS translation
@@ -12,37 +18,47 @@ PROTO SpiderLeg [
     children [
       HingeJoint {
         jointParameters HingeJointParameters {
-          axis 0 0 1
+          axis 0 1 0
           minStop -1.570796
           maxStop 1.570796
         }
         device [
-          RotationalMotor { name "%{= fields.prefix.value}_coxa_motor" maxTorque IS jointTorque }
-          PositionSensor { name "%{= fields.prefix.value}_coxa_sensor" }
+          RotationalMotor { name IS coxaMotorName maxTorque IS jointTorque }
+          PositionSensor { name IS coxaSensorName }
         ]
         endPoint Solid {
           children [
-            Shape {
-              appearance PBRAppearance { baseColor 0.25 0.27 0.32 }
-              geometry Mesh { url [ "../assets/leg_coxa.stl" ] scale 0.001 0.001 0.001 }
+            Transform {
+              scale 0.001 0.001 0.001
+              children [
+                Shape {
+                  appearance PBRAppearance { baseColor 0.25 0.27 0.32 }
+                  geometry Mesh { url [ "../assets/leg_coxa.stl" ] }
+                }
+              ]
             }
             HingeJoint {
               jointParameters HingeJointParameters {
-                axis 0 1 0
+                axis 0 0 1
                 anchor 0.0438 0 0
                 minStop -1.570796
                 maxStop 1.570796
               }
               device [
-                RotationalMotor { name "%{= fields.prefix.value}_femur_motor" maxTorque IS jointTorque }
-                PositionSensor { name "%{= fields.prefix.value}_femur_sensor" }
+                RotationalMotor { name IS femurMotorName maxTorque IS jointTorque }
+                PositionSensor { name IS femurSensorName }
               ]
               endPoint Solid {
                 translation 0.0438 0 0
                 children [
-                  Shape {
-                    appearance PBRAppearance { baseColor 0.3 0.32 0.38 }
-                    geometry Mesh { url [ "../assets/leg_femur.stl" ] scale 0.001 0.001 0.001 }
+                  Transform {
+                    scale 0.001 0.001 0.001
+                    children [
+                      Shape {
+                        appearance PBRAppearance { baseColor 0.3 0.32 0.38 }
+                        geometry Mesh { url [ "../assets/leg_femur.stl" ] }
+                      }
+                    ]
                   }
                   HingeJoint {
                     jointParameters HingeJointParameters {
@@ -52,29 +68,35 @@ PROTO SpiderLeg [
                       maxStop 2.268928
                     }
                     device [
-                      RotationalMotor { name "%{= fields.prefix.value}_tibia_motor" maxTorque IS jointTorque }
-                      PositionSensor { name "%{= fields.prefix.value}_tibia_sensor" }
+                      RotationalMotor { name IS tibiaMotorName maxTorque IS jointTorque }
+                      PositionSensor { name IS tibiaSensorName }
                     ]
                     endPoint Solid {
                       translation 0.088 0 0
                       children [
-                        Shape {
-                          appearance PBRAppearance { baseColor 0.35 0.37 0.44 }
-                          geometry Mesh { url [ "../assets/leg_tibia.stl" ] scale 0.001 0.001 0.001 }
+                        Transform {
+                          scale 0.001 0.001 0.001
+                          children [
+                            Shape {
+                              appearance PBRAppearance { baseColor 0.35 0.37 0.44 }
+                              geometry Mesh { url [ "../assets/leg_tibia.stl" ] }
+                            }
+                          ]
                         }
                       ]
                       boundingObject Box { size 0.166 0.016 0.016 }
-                      physics Physics { mass 0.08 }
+                      contactMaterial "spider_foot"
+                      physics Physics { density -1 mass IS linkMass }
                     }
                   }
                 ]
                 boundingObject Box { size 0.088 0.018 0.018 }
-                physics Physics { mass 0.12 }
+                physics Physics { density -1 mass IS linkMass }
               }
             }
           ]
           boundingObject Box { size 0.0438 0.025 0.025 }
-          physics Physics { mass 0.08 }
+          physics Physics { density -1 mass IS linkMass }
         }
       }
     ]

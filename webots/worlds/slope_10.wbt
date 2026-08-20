@@ -3,13 +3,13 @@
 EXTERNPROTO "../protos/Spider.proto"
 EXTERNPROTO "../protos/SlopeTerrain.proto"
 
-WorldInfo { basicTimeStep 16 }
+WorldInfo { basicTimeStep 20 }
 Viewpoint {
   position 1.35 1.15 0.95
   orientation -0.42 0.56 0.72 2.25
   description "10 degree slope validation world"
 }
-TexturedBackground { }
-TexturedBackgroundLight { }
+Background { skyColor [ 0.08 0.10 0.14 ] }
+DirectionalLight { direction -0.4 -0.6 -1 castShadows TRUE }
 SlopeTerrain { angle 10 size 4 4 0.1 }
 Spider { name "spider_slope_10" }

@@ -2,16 +2,24 @@
 
 EXTERNPROTO "../protos/Spider.proto"
 
-WorldInfo { basicTimeStep 16 }
+WorldInfo { basicTimeStep 20 }
 Viewpoint {
   position 1.2 1.1 0.85
   orientation -0.42 0.56 0.72 2.25
   description "Flat spider validation world"
 }
-TexturedBackground { }
-TexturedBackgroundLight { }
-Floor {
-  size 4 4
-  appearance PBRAppearance { baseColor 0.30 0.33 0.30 roughness 0.9 }
+Background { skyColor [ 0.08 0.10 0.14 ] }
+DirectionalLight { direction -0.4 -0.6 -1 castShadows TRUE }
+Solid {
+  translation 0 -0.05 0
+  contactMaterial "ground"
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 0.30 0.33 0.30 roughness 0.9 }
+      geometry Box { size 4 4 0.1 }
+    }
+  ]
+  boundingObject Box { size 4 4 0.1 }
+  physics NULL
 }
 Spider { name "spider_flat" }

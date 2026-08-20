@@ -25,8 +25,8 @@ except ImportError:  # pragma: no cover - exercised by normal Python imports.
 
 TIME_STEP_MS = 20
 JOINT_NAMES = ("coxa", "femur", "tibia")
-BODY_TRANSLATION = (0.0, 0.0, 0.16)
-BODY_ROTATION = (0.0, 0.0, 1.0, 0.0)
+BODY_TRANSLATION = (0.0, 0.16, 0.0)
+BODY_ROTATION = (0.0, 1.0, 0.0, 0.0)
 
 
 def _key_name(key: Any) -> str:

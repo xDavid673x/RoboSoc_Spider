@@ -3,39 +3,110 @@
 EXTERNPROTO "SpiderLeg.proto"
 
 PROTO Spider [
-  field SFVec3f translation 0 0 0.16
+  field SFVec3f translation 0 0.16 0
   field SFRotation rotation 0 0 1 0
   field SFString controller "spider_controller"
   field SFString name "spider"
+  field SFBool supervisor TRUE
   # Provisional values: replace after measured mass/inertia and actuator limits.
-  field SFFloat bodyMass 1.5
-  field SFFloat jointTorque 2.0
+  field SFFloat bodyMass 1.2
+  field SFFloat linkMass 0.1
+  field SFFloat jointTorque 2.5
 ] {
   Robot {
     translation IS translation
     rotation IS rotation
     name IS name
     controller IS controller
+    supervisor IS supervisor
     children [
-      Shape {
-        appearance PBRAppearance {
-          baseColor 0.12 0.14 0.18
-          roughness 0.55
-          metalness 0.25
-        }
-        geometry Mesh {
-          url [ "../assets/body_hex_base.stl" ]
-          scale 0.001 0.001 0.001
-        }
+      Transform {
+        scale 0.001 0.001 0.001
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.12 0.14 0.18
+              roughness 0.55
+              metalness 0.25
+            }
+            geometry Mesh { url [ "../assets/body_hex_base.stl" ] }
+          }
+        ]
       }
-      SpiderLeg { prefix "legi" translation 0.05 0 0 rotation 0 0 1 0 jointTorque IS jointTorque }
-      SpiderLeg { prefix "legj" translation 0.05 0.04 0 rotation 0 0 1 0.674741 jointTorque IS jointTorque }
-      SpiderLeg { prefix "legk" translation -0.05 0.04 0 rotation 0 0 1 2.466852 jointTorque IS jointTorque }
-      SpiderLeg { prefix "legl" translation -0.05 0 0 rotation 0 0 1 3.141593 jointTorque IS jointTorque }
-      SpiderLeg { prefix "legm" translation -0.05 -0.04 0 rotation 0 0 1 3.816445 jointTorque IS jointTorque }
-      SpiderLeg { prefix "legn" translation 0.05 -0.04 0 rotation 0 0 1 5.608445 jointTorque IS jointTorque }
+      SpiderLeg {
+        coxaMotorName "legi_coxa_motor"
+        coxaSensorName "legi_coxa_sensor"
+        femurMotorName "legi_femur_motor"
+        femurSensorName "legi_femur_sensor"
+        tibiaMotorName "legi_tibia_motor"
+        tibiaSensorName "legi_tibia_sensor"
+        translation 0.05 0 0
+        rotation 0 1 0 0
+        jointTorque IS jointTorque
+        linkMass IS linkMass
+      }
+      SpiderLeg {
+        coxaMotorName "legj_coxa_motor"
+        coxaSensorName "legj_coxa_sensor"
+        femurMotorName "legj_femur_motor"
+        femurSensorName "legj_femur_sensor"
+        tibiaMotorName "legj_tibia_motor"
+        tibiaSensorName "legj_tibia_sensor"
+        translation 0.05 0 0.04
+        rotation 0 1 0 -0.785398
+        jointTorque IS jointTorque
+        linkMass IS linkMass
+      }
+      SpiderLeg {
+        coxaMotorName "legk_coxa_motor"
+        coxaSensorName "legk_coxa_sensor"
+        femurMotorName "legk_femur_motor"
+        femurSensorName "legk_femur_sensor"
+        tibiaMotorName "legk_tibia_motor"
+        tibiaSensorName "legk_tibia_sensor"
+        translation -0.05 0 0.04
+        rotation 0 1 0 -2.356194
+        jointTorque IS jointTorque
+        linkMass IS linkMass
+      }
+      SpiderLeg {
+        coxaMotorName "legl_coxa_motor"
+        coxaSensorName "legl_coxa_sensor"
+        femurMotorName "legl_femur_motor"
+        femurSensorName "legl_femur_sensor"
+        tibiaMotorName "legl_tibia_motor"
+        tibiaSensorName "legl_tibia_sensor"
+        translation -0.05 0 0
+        rotation 0 1 0 3.141593
+        jointTorque IS jointTorque
+        linkMass IS linkMass
+      }
+      SpiderLeg {
+        coxaMotorName "legm_coxa_motor"
+        coxaSensorName "legm_coxa_sensor"
+        femurMotorName "legm_femur_motor"
+        femurSensorName "legm_femur_sensor"
+        tibiaMotorName "legm_tibia_motor"
+        tibiaSensorName "legm_tibia_sensor"
+        translation -0.05 0 -0.04
+        rotation 0 1 0 2.356194
+        jointTorque IS jointTorque
+        linkMass IS linkMass
+      }
+      SpiderLeg {
+        coxaMotorName "legn_coxa_motor"
+        coxaSensorName "legn_coxa_sensor"
+        femurMotorName "legn_femur_motor"
+        femurSensorName "legn_femur_sensor"
+        tibiaMotorName "legn_tibia_motor"
+        tibiaSensorName "legn_tibia_sensor"
+        translation 0.05 0 -0.04
+        rotation 0 1 0 0.785398
+        jointTorque IS jointTorque
+        linkMass IS linkMass
+      }
     ]
-    boundingObject Box { size 0.22 0.14 0.04 }
-    physics Physics { mass IS bodyMass }
+    boundingObject Box { size 0.22 0.04 0.14 }
+    physics Physics { density -1 mass IS bodyMass }
   }
 }
