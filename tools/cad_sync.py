@@ -1124,21 +1124,42 @@ def _webots_rotation_from_matrix(flat: list[float]) -> tuple[list[float], float]
     rows = _matrix_from_flat(flat)
     trace = rows[0][0] + rows[1][1] + rows[2][2]
     angle = math.acos(max(-1.0, min(1.0, (trace - 1.0) / 2.0)))
+    skew = [
+        rows[2][1] - rows[1][2],
+        rows[0][2] - rows[2][0],
+        rows[1][0] - rows[0][1],
+    ]
     if abs(angle) < 1e-9:
         return [0.0, 1.0, 0.0], 0.0
-    if abs(math.pi - angle) < 1e-7:
-        axis = [
-            math.sqrt(max(0.0, (rows[0][0] + 1.0) / 2.0)),
-            math.sqrt(max(0.0, (rows[1][1] + 1.0) / 2.0)),
-            math.sqrt(max(0.0, (rows[2][2] + 1.0) / 2.0)),
-        ]
-        if rows[0][1] < 0.0:
-            axis[1] = -axis[1]
-        if rows[0][2] < 0.0:
-            axis[2] = -axis[2]
-        return _unit(axis), angle
+    if abs(math.pi - angle) < 1e-7 or (trace < -0.999999 and _length(skew) < 1e-7):
+        diagonals = [rows[0][0], rows[1][1], rows[2][2]]
+        largest = max(range(3), key=lambda index: diagonals[index])
+        axis = [0.0, 0.0, 0.0]
+        next_index = (largest + 1) % 3
+        previous_index = (largest + 2) % 3
+        value = math.sqrt(
+            max(
+                0.0,
+                1.0
+                + rows[largest][largest]
+                - rows[next_index][next_index]
+                - rows[previous_index][previous_index],
+            )
+        ) / 2.0
+        _require(value > 1e-12, f"invalid 180-degree rotation matrix: {flat}")
+        axis[largest] = value
+        if largest == 0:
+            axis[1] = (rows[0][1] + rows[1][0]) / (4.0 * value)
+            axis[2] = (rows[0][2] + rows[2][0]) / (4.0 * value)
+        elif largest == 1:
+            axis[0] = (rows[0][1] + rows[1][0]) / (4.0 * value)
+            axis[2] = (rows[1][2] + rows[2][1]) / (4.0 * value)
+        else:
+            axis[0] = (rows[0][2] + rows[2][0]) / (4.0 * value)
+            axis[1] = (rows[1][2] + rows[2][1]) / (4.0 * value)
+        return _unit(axis), math.pi
     denom = 2.0 * math.sin(angle)
-    return _unit([(rows[2][1] - rows[1][2]) / denom, (rows[0][2] - rows[2][0]) / denom, (rows[1][0] - rows[0][1]) / denom]), angle
+    return _unit([value / denom for value in skew]), angle
 
 
 def _visual_shape(visual: dict[str, Any], indent: str) -> list[str]:

@@ -204,6 +204,99 @@ def _committed_manifest() -> dict:
     return json.loads((ROOT / "webots/cad/spider_geometry.v1.json").read_text(encoding="ascii"))
 
 
+def _assert_rotation_round_trips(flat: list[float]) -> None:
+    original = cad_sync._matrix_from_flat(flat)
+    axis, angle = cad_sync._webots_rotation_from_matrix(flat)
+    reconstructed = cad_sync._rotation_about_axis(axis, angle)
+
+    for row in range(3):
+        for column in range(3):
+            assert reconstructed[row][column] == pytest.approx(
+                original[row][column],
+                abs=1e-9,
+            )
+
+
+@pytest.mark.parametrize(
+    "axis",
+    (
+        (1.0, 0.0, 0.0),
+        (0.0, 1.0, 0.0),
+        (0.0, 0.0, 1.0),
+        (1.0, 1.0, 0.0),
+        (1.0, 1.0, 1.0),
+        (1.0, 2.0, 3.0),
+        (0.0, 1.0, -1.0),
+    ),
+)
+def test_webots_rotation_serializer_round_trips_pi_rotations(axis):
+    flat = cad_sync._flat_from_matrix(cad_sync._rotation_about_axis(axis, math.pi))
+
+    _assert_rotation_round_trips(flat)
+
+
+def test_webots_rotation_serializer_round_trips_mixed_sign_yz_pi_rotation():
+    # 180 degrees around the [0, 1, -1] axis has equal Y/Z diagonals and
+    # negative YZ off-diagonals.  The serializer must preserve that sign.
+    flat = [
+        -1.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, -1.0, 0.0,
+        0.0, -1.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 1.0,
+    ]
+
+    _assert_rotation_round_trips(flat)
+
+
+def test_webots_rotation_serializer_round_trips_committed_transform_rotations():
+    manifest = _committed_manifest()
+    transforms = []
+
+    for visual in manifest["body"]["visuals"]:
+        transforms.extend(
+            [
+                visual["assembly_transform_body_mm"],
+                visual["body_centered_transform_mm"],
+                visual["group_local_transform_mm"],
+            ]
+        )
+    for leg in manifest["legs"]:
+        transforms.append(leg["leg_to_body_transform_mm"])
+        for group in leg["groups"].values():
+            transforms.append(group["frame_body_mm"])
+            for visual in group["visuals"]:
+                transforms.extend(
+                    [
+                        visual["assembly_transform_body_mm"],
+                        visual["body_centered_transform_mm"],
+                        visual["group_local_transform_mm"],
+                    ]
+                )
+        for joint in leg["joints"]:
+            transforms.extend(
+                [
+                    joint["zero_transform_parent_mm"],
+                    joint["zero_transform_body_mm"],
+                ]
+            )
+
+    assert transforms
+    for flat in transforms:
+        _assert_rotation_round_trips(flat)
+
+        original = cad_sync._matrix_from_flat(flat)
+        axis, angle = cad_sync._webots_rotation_from_matrix(flat)
+        formatted_axis = [float(cad_sync._fmt(value)) for value in axis]
+        formatted_angle = float(cad_sync._fmt(angle))
+        reconstructed = cad_sync._rotation_about_axis(formatted_axis, formatted_angle)
+        for row in range(3):
+            for column in range(3):
+                assert reconstructed[row][column] == pytest.approx(
+                    original[row][column],
+                    abs=1e-8,
+                )
+
+
 def test_committed_manifest_reconstructs_all_fusion_visuals_and_joints():
     manifest = _committed_manifest()
 
