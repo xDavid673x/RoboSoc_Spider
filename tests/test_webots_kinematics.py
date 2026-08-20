@@ -23,6 +23,7 @@ from webots.controllers.spider_controller.kinematics_adapter import (
     joint_angles_to_webots,
     mm_to_m,
 )
+from servo2040_receiver.legs_IK import SERVO_OFFSETS
 
 
 def test_length_and_angle_conversions_preserve_boundary_units():
@@ -122,6 +123,43 @@ def test_walk_and_turn_gaits_alternate_tripods_each_phase():
     for _ in range(turn_phase_steps):
         turn_spider.command({"mode": "turn", "turn": 1.0, "speed": 1.0})
     assert turn_spider.gait.tripods[turn_spider.gait.turn_tripod_idx] == TRIPOD_A
+
+
+@pytest.mark.parametrize(
+    ("command", "cycle_steps"),
+    (
+        (
+            {"mode": "walk", "vx": 1.0, "speed": 1.0},
+            2 * (gait_step_for_speed(MAX_WALK_SPEED) + 1),
+        ),
+        (
+            {"mode": "turn", "turn": 1.0, "speed": 1.0},
+            2 * (gait_step_for_speed(1.0) + 1),
+        ),
+        (
+            {"mode": "turn", "turn": -1.0, "speed": 1.0},
+            2 * (gait_step_for_speed(1.0) + 1),
+        ),
+    ),
+)
+def test_full_gait_cycles_keep_internal_joint_state_within_limits(
+    command, cycle_steps
+):
+    spider = VirtualSpider()
+
+    for _ in range(cycle_steps):
+        spider.command(command)
+        reported_angles = spider.joint_angles_deg()
+        for name, leg in spider.legs.items():
+            raw_command_angles = [
+                angle - SERVO_OFFSETS[index]
+                for index, angle in enumerate(leg.get_angles())
+            ]
+            assert raw_command_angles == pytest.approx(reported_angles[name])
+            for angle, (lower, upper) in zip(
+                raw_command_angles, JOINT_LIMITS_DEG
+            ):
+                assert lower <= angle <= upper
 
 
 def test_webots_mount_compensation_and_gait_rate_match_the_body_frame():

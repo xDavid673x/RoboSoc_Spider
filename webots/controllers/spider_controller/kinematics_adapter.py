@@ -177,6 +177,21 @@ class VirtualSpider:
         self.last_mode = "init"
         self.last_command = Command(mode="init")
 
+    @staticmethod
+    def _command_angles_deg(leg: SpiderLeg) -> list[float]:
+        return [
+            angle - SERVO_OFFSETS[index]
+            for index, angle in enumerate(leg.get_angles())
+        ]
+
+    def _enforce_joint_limits(self) -> None:
+        """Keep virtual leg state and Webots motor targets on the same pose."""
+
+        for leg in self.legs.values():
+            limited_angles = clamp_joint_angles(self._command_angles_deg(leg))
+            leg.set_angles(limited_angles)
+            leg.forwardKinematics()
+
     def command(self, payload: Mapping[str, Any] | Command | None) -> None:
         command = payload if isinstance(payload, Command) else Command.from_mapping(payload)
         if command.mode == "init":
@@ -216,6 +231,7 @@ class VirtualSpider:
                 step=gait_step_for_speed(command.speed),
                 xpos=130.0 + 20.0 * command.height,
             )
+            self._enforce_joint_limits()
             self.last_mode = "turn"
             self.last_command = command
             return
@@ -236,6 +252,7 @@ class VirtualSpider:
                     step=gait_step_for_speed(walk_speed),
                     xpos=130.0 + 20.0 * command.height,
                 )
+                self._enforce_joint_limits()
             self.last_mode = "walk"
             self.last_command = command
             return
@@ -244,12 +261,7 @@ class VirtualSpider:
 
     def joint_angles_deg(self) -> dict[str, list[float]]:
         return {
-            name: clamp_joint_angles(
-                [
-                    angle - SERVO_OFFSETS[index]
-                    for index, angle in enumerate(leg.get_angles())
-                ]
-            )
+            name: clamp_joint_angles(self._command_angles_deg(leg))
             for name, leg in self.legs.items()
         }
 
