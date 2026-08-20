@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import socket
 import subprocess
 import tempfile
 
@@ -22,14 +23,22 @@ WORLDS = (
 )
 
 
-def _run_world(world: Path, port: int) -> tuple[str, dict[str, object]]:
+def _run_world(
+    world: Path,
+    port: int | None = None,
+    smoke_mode: str = "smoke",
+) -> tuple[str, dict[str, object]]:
+    if port is None:
+        with socket.socket() as port_probe:
+            port_probe.bind(("127.0.0.1", 0))
+            port = port_probe.getsockname()[1]
     environment = os.environ.copy()
     result_file = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
     result_file.close()
     contents = world.read_text(encoding="ascii")
     contents = contents.replace(
         "Spider { name ",
-        f'Spider {{ customData "smoke:{result_file.name}" name ',
+        f'Spider {{ customData "{smoke_mode}:{result_file.name}" name ',
         1,
     )
     temporary_world = tempfile.NamedTemporaryFile(
@@ -85,6 +94,13 @@ def test_all_worlds_load_with_all_devices_and_command_directions():
         results.append(result)
         assert result["devices"] == 18
         assert result["sensors"] == 18
+        assert result["missing_motors"] == []
+        assert result["missing_sensors"] == []
+        assert result["body_position_m"][1] > 0.02
+        assert all(
+            angles == pytest.approx([0.0, 28.0, 115.0], abs=0.1)
+            for angles in result["sensor_angles_deg"].values()
+        )
         assert result["stop_angles_deg"] == pytest.approx([0.0, 28.0, 115.0])
         assert result["reset_angles_deg"] == pytest.approx([0.0, 28.0, 115.0])
         assert "servo_control module not found" in text
@@ -95,7 +111,7 @@ def test_all_worlds_load_with_all_devices_and_command_directions():
         left = result["deltas_mm"]["left"]
         right = result["deltas_mm"]["right"]
         assert forward[1] * backward[1] < 0
-        assert left[0] * right[0] < 0
+        assert left[1] * right[1] < 0
 
 
 @pytest.mark.skipif(not WEBOTS.exists(), reason="Webots R2025a is not installed")
@@ -103,5 +119,54 @@ def test_all_worlds_load_with_all_devices_and_command_directions():
 def test_slope_world_declares_requested_angle(angle):
     world = ROOT / f"webots/worlds/slope_{angle}.wbt"
     contents = world.read_text(encoding="ascii")
+    assert 'coordinateSystem "NUE"' in contents
     assert "basicTimeStep 20" in contents
-    assert f"SlopeTerrain {{ angle {angle} " in contents
+    assert f"SlopeTerrain {{ angle {angle} }}" in contents
+
+
+@pytest.mark.skipif(not WEBOTS.exists(), reason="Webots R2025a is not installed")
+def test_flat_world_physical_motion_stop_and_reset():
+    world = ROOT / "webots/worlds/flat.wbt"
+    results = {
+        scenario: _run_world(world, smoke_mode=f"smoke-motion-{scenario}")[1]
+        for scenario in (
+            "stand",
+            "forward",
+            "backward",
+            "left",
+            "right",
+            "stop",
+            "reset",
+        )
+    }
+
+    stand = results["stand"]
+    assert 0.10 < stand["end_position_m"][1] < 0.15
+    assert stand["drift_m"] < 0.001
+    assert abs(stand["yaw_rad"]) < 0.01
+
+    forward = results["forward"]["displacement_m"]
+    backward = results["backward"]["displacement_m"]
+    assert forward[2] < -0.1
+    assert backward[2] > 0.1
+    assert forward[2] * backward[2] < 0.0
+    assert abs(forward[0]) < 0.05
+    assert abs(backward[0]) < 0.05
+
+    left = results["left"]
+    right = results["right"]
+    assert left["yaw_rad"] * right["yaw_rad"] < 0.0
+    assert abs(left["yaw_rad"]) > 0.5
+    assert abs(right["yaw_rad"]) > 0.5
+    assert sum(value * value for value in left["displacement_m"][::2]) < 0.0025
+    assert sum(value * value for value in right["displacement_m"][::2]) < 0.0025
+
+    assert results["stop"]["stop_drift_m"] < 0.001
+
+    reset = results["reset"]
+    assert reset["reset_position_m"] == pytest.approx([0.0, 0.133, 0.0])
+    assert reset["reset_yaw_rad"] == pytest.approx(0.0, abs=1e-6)
+    assert all(
+        angles == pytest.approx([0.0, 28.0, 115.0], abs=0.1)
+        for angles in reset["reset_sensor_angles_deg"].values()
+    )

@@ -33,7 +33,8 @@ class FakeBody:
 
 
 class FakeDevice:
-    def __init__(self):
+    def __init__(self, tag):
+        self._tag = tag
         self.enabled = []
         self.positions = []
 
@@ -44,17 +45,37 @@ class FakeDevice:
         self.positions.append(position)
 
 
+class FakeJoint:
+    def __init__(self):
+        self.positions = []
+
+    def setJointPosition(self, position):
+        self.positions.append(position)
+
+
+class FakeDeviceNode:
+    def __init__(self, joint):
+        self.joint = joint
+
+    def getParentNode(self):
+        return self.joint
+
+
 class FakeSupervisor:
     def __init__(self):
         self.body = FakeBody()
         self.devices = {}
+        self.joints = {}
         self.physics_reset_count = 0
 
     def getSelf(self):
         return self.body
 
     def getDevice(self, name):
-        return self.devices.setdefault(name, FakeDevice())
+        return self.devices.setdefault(name, FakeDevice(name))
+
+    def getFromDevice(self, tag):
+        return FakeDeviceNode(self.joints.setdefault(tag, FakeJoint()))
 
     def simulationResetPhysics(self):
         self.physics_reset_count += 1
@@ -77,6 +98,7 @@ def test_controller_looks_up_all_devices_and_enables_sensors():
     assert controller.timestep == TIME_STEP_MS
     assert len(controller.motors) == 18
     assert len(controller.sensors) == 18
+    assert len(controller.joints) == 18
     assert all(
         sensor.enabled == [TIME_STEP_MS] for sensor in controller.sensors.values()
     )
@@ -99,6 +121,13 @@ def test_reset_restores_body_physics_and_joint_pose():
     assert supervisor.body.fields["translation"].value == [0.0, 0.133, 0.0]
     assert supervisor.body.fields["rotation"].value == [0.0, 1.0, 0.0, 0.0]
     assert controller.spider.last_mode == "init"
+    assert all(
+        joint.positions[-1] == math.radians(angle)
+        for joint, angle in zip(
+            [supervisor.joints[f"legi_{joint}_motor"] for joint in JOINT_NAMES],
+            (0.0, 28.0, 115.0),
+        )
+    )
     assert all(
         motor.positions[-1] == math.radians(angle)
         for motor, angle in zip(

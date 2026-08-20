@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -82,6 +83,7 @@ class SpiderController:
         self.body = self._get_self_node()
         self.motors: dict[str, Any] = {}
         self.sensors: dict[str, Any] = {}
+        self.joints: dict[str, Any] = {}
         self._lookup_devices()
         self._enable_sensors()
         self.reset()
@@ -94,11 +96,21 @@ class SpiderController:
         get_device = getattr(self.supervisor, "getDevice", None)
         if get_device is None:
             return
+        get_from_device = getattr(self.supervisor, "getFromDevice", None)
         for leg in LEG_NAMES:
             for joint in JOINT_NAMES:
                 key = f"{leg}_{joint}"
-                self.motors[key] = get_device(f"{key}_motor")
+                motor = get_device(f"{key}_motor")
+                self.motors[key] = motor
                 self.sensors[key] = get_device(f"{key}_sensor")
+                # Webots' Python Device exposes its Supervisor lookup tag here.
+                device_tag = getattr(motor, "_tag", None)
+                if get_from_device is not None and device_tag is not None:
+                    motor_node = get_from_device(device_tag)
+                    if motor_node is not None:
+                        joint_node = motor_node.getParentNode()
+                        if joint_node is not None:
+                            self.joints[key] = joint_node
 
     def _enable_sensors(self) -> None:
         for sensor in self.sensors.values():
@@ -109,28 +121,37 @@ class SpiderController:
     def _reset_body(self) -> None:
         if self.body is None:
             return
+        get_field = getattr(self.body, "getField", None)
+        if get_field:
+            translation = get_field("translation")
+            if translation is not None and hasattr(translation, "setSFVec3f"):
+                translation.setSFVec3f(list(BODY_TRANSLATION))
+            rotation = get_field("rotation")
+            if rotation is not None and hasattr(rotation, "setSFRotation"):
+                rotation.setSFRotation(list(BODY_ROTATION))
         reset_physics = getattr(self.body, "resetPhysics", None)
         if reset_physics:
             reset_physics()
-        get_field = getattr(self.body, "getField", None)
-        if not get_field:
-            return
-        translation = get_field("translation")
-        if translation is not None and hasattr(translation, "setSFVec3f"):
-            translation.setSFVec3f(list(BODY_TRANSLATION))
-        rotation = get_field("rotation")
-        if rotation is not None and hasattr(rotation, "setSFRotation"):
-            rotation.setSFRotation(list(BODY_ROTATION))
+
+    def _reset_joint_positions(self) -> None:
+        angles = self.spider.joint_angles_rad()
+        for leg in LEG_NAMES:
+            for joint_index, joint in enumerate(JOINT_NAMES):
+                joint_node = self.joints.get(f"{leg}_{joint}")
+                set_position = getattr(joint_node, "setJointPosition", None)
+                if set_position:
+                    set_position(angles[leg][joint_index])
 
     def reset(self) -> None:
         """Reset physics, body pose, gait phases, and all joint commands."""
 
+        self.spider.reset()
+        self._reset_body()
+        self._reset_joint_positions()
+        self._apply_joint_angles()
         simulation_reset = getattr(self.supervisor, "simulationResetPhysics", None)
         if simulation_reset:
             simulation_reset()
-        self._reset_body()
-        self.spider.reset()
-        self._apply_joint_angles()
 
     def _apply_joint_angles(self) -> None:
         angles = self.spider.joint_angles_rad()
@@ -158,9 +179,51 @@ class SpiderController:
         keyboard = Keyboard()
         keyboard.enable(self.timestep)
         while self.supervisor.step(self.timestep) != -1:
+            pressed = []
             key = keyboard.getKey()
-            pressed = [] if key < 0 else [key]
+            while key >= 0:
+                pressed.append(key)
+                key = keyboard.getKey()
             self.apply(keyboard_command(pressed))
+
+    def _step_simulation(
+        self,
+        count: int,
+        command: Command | dict[str, Any] | None = None,
+    ) -> None:
+        for _ in range(count):
+            if command is not None:
+                self.apply(command)
+            if self.supervisor.step(self.timestep) == -1:
+                raise RuntimeError("Webots terminated during the smoke sequence")
+
+    def _body_state(self) -> tuple[list[float], float]:
+        if self.body is None:
+            raise RuntimeError("Supervisor self node is unavailable")
+        position = list(self.body.getPosition())
+        orientation = list(self.body.getOrientation())
+        yaw = math.atan2(orientation[2], orientation[0])
+        return position, yaw
+
+    def _sensor_angles_deg(self) -> dict[str, list[float]]:
+        return {
+            leg: [
+                math.degrees(self.sensors[f"{leg}_{joint}"].getValue())
+                for joint in JOINT_NAMES
+            ]
+            for leg in LEG_NAMES
+        }
+
+    @staticmethod
+    def _angle_delta(final: float, initial: float) -> float:
+        return math.atan2(math.sin(final - initial), math.cos(final - initial))
+
+    @staticmethod
+    def _write_smoke_result(result: dict[str, Any], result_path: str | None) -> None:
+        encoded_result = json.dumps(result, sort_keys=True)
+        if result_path:
+            Path(result_path).write_text(encoded_result, encoding="utf-8")
+        print("SPIDER_SMOKE_RESULT " + encoded_result, flush=True)
 
     def run_smoke(self, result_path: str | None = None) -> None:
         """Run deterministic command checks and quit a headless Webots run.
@@ -170,6 +233,15 @@ class SpiderController:
         real Webots world resolved every device and that the four keyboard
         directions reach the existing gait boundary with opposite signs.
         """
+
+        self._step_simulation(80, Command.stop())
+        body_position, body_yaw = self._body_state()
+        missing_motors = sorted(
+            key for key, motor in self.motors.items() if motor is None
+        )
+        missing_sensors = sorted(
+            key for key, sensor in self.sensors.items() if sensor is None
+        )
 
         scenarios = {
             "forward": {"mode": "walk", "vx": 1.0, "speed": 1.0},
@@ -190,16 +262,104 @@ class SpiderController:
         self.apply({"mode": "init"})
         reset_angles = self.spider.joint_angles_deg()["legi"]
         result = {
-            "devices": len(self.motors),
-            "sensors": len(self.sensors),
+            "devices": len(self.motors) - len(missing_motors),
+            "sensors": len(self.sensors) - len(missing_sensors),
+            "missing_motors": missing_motors,
+            "missing_sensors": missing_sensors,
+            "sensor_angles_deg": (
+                {} if missing_sensors else self._sensor_angles_deg()
+            ),
+            "body_position_m": body_position,
+            "body_yaw_rad": body_yaw,
             "deltas_mm": deltas,
             "stop_angles_deg": stop_angles,
             "reset_angles_deg": reset_angles,
         }
-        encoded_result = json.dumps(result, sort_keys=True)
-        if result_path:
-            Path(result_path).write_text(encoded_result, encoding="utf-8")
-        print("SPIDER_SMOKE_RESULT " + encoded_result, flush=True)
+        self._write_smoke_result(result, result_path)
+        simulation_quit = getattr(self.supervisor, "simulationQuit", None)
+        if simulation_quit:
+            simulation_quit(0)
+
+    def run_motion_smoke(
+        self,
+        scenario: str,
+        result_path: str | None = None,
+    ) -> None:
+        """Measure one isolated physical behavior in a fresh Webots process."""
+
+        scenarios = {
+            "forward": {"mode": "walk", "vx": 1.0, "speed": 1.0},
+            "backward": {"mode": "walk", "vx": -1.0, "speed": 1.0},
+            "left": {"mode": "turn", "turn": -1.0, "speed": 1.0},
+            "right": {"mode": "turn", "turn": 1.0, "speed": 1.0},
+        }
+        self.reset()
+        self._step_simulation(80, Command.stop())
+
+        result: dict[str, Any] = {"scenario": scenario}
+        if scenario in scenarios:
+            start_position, start_yaw = self._body_state()
+            motion_steps = 80 if scenario in {"left", "right"} else 120
+            self._step_simulation(motion_steps, scenarios[scenario])
+            end_position, end_yaw = self._body_state()
+            result.update(
+                {
+                    "start_position_m": start_position,
+                    "end_position_m": end_position,
+                    "displacement_m": [
+                        end_position[index] - start_position[index]
+                        for index in range(3)
+                    ],
+                    "yaw_rad": self._angle_delta(end_yaw, start_yaw),
+                }
+            )
+        elif scenario == "stop":
+            self._step_simulation(160, scenarios["forward"])
+            self._step_simulation(30, Command.stop())
+            stop_start, _ = self._body_state()
+            self._step_simulation(40, Command.stop())
+            stop_end, _ = self._body_state()
+            result.update(
+                {
+                    "stop_start_m": stop_start,
+                    "stop_end_m": stop_end,
+                    "stop_drift_m": math.dist(stop_start, stop_end),
+                }
+            )
+        elif scenario == "reset":
+            self._step_simulation(120, scenarios["forward"])
+            before_reset, _ = self._body_state()
+            self.reset()
+            self._step_simulation(1)
+            reset_position, reset_yaw = self._body_state()
+            result.update(
+                {
+                    "before_reset_m": before_reset,
+                    "reset_position_m": reset_position,
+                    "reset_yaw_rad": reset_yaw,
+                    "reset_angles_deg": self.spider.joint_angles_deg()["legi"],
+                    "reset_sensor_angles_deg": self._sensor_angles_deg(),
+                }
+            )
+        elif scenario == "stand":
+            start_position, start_yaw = self._body_state()
+            start_angles = self._sensor_angles_deg()
+            self._step_simulation(120, Command.stop())
+            end_position, end_yaw = self._body_state()
+            result.update(
+                {
+                    "start_position_m": start_position,
+                    "end_position_m": end_position,
+                    "drift_m": math.dist(start_position, end_position),
+                    "yaw_rad": self._angle_delta(end_yaw, start_yaw),
+                    "start_angles_deg": start_angles,
+                    "end_angles_deg": self._sensor_angles_deg(),
+                }
+            )
+        else:
+            raise ValueError(f"unknown motion smoke scenario: {scenario}")
+
+        self._write_smoke_result(result, result_path)
         simulation_quit = getattr(self.supervisor, "simulationQuit", None)
         if simulation_quit:
             simulation_quit(0)
@@ -209,7 +369,10 @@ def main() -> None:
     controller = SpiderController()
     get_custom_data = getattr(controller.supervisor, "getCustomData", None)
     custom_data = get_custom_data() if get_custom_data else ""
-    if custom_data.startswith("smoke:"):
+    if custom_data.startswith("smoke-motion-"):
+        mode, result_path = custom_data.split(":", 1)
+        controller.run_motion_smoke(mode.removeprefix("smoke-motion-"), result_path)
+    elif custom_data.startswith("smoke:"):
         controller.run_smoke(custom_data.removeprefix("smoke:"))
     else:
         controller.run()
