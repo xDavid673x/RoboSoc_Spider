@@ -93,6 +93,22 @@ def _webots_point_mm(point: adsk.core.Point3D) -> list[float]:
     ]
 
 
+def _entity_token(entity) -> str | None:
+    """Read optional Fusion provenance without aborting on stale API proxies.
+
+    Fusion can retain a deleted/invalid rigid-group proxy in ``allRigidGroups``
+    after an assembly edit.  Its ``entityToken`` accessor then raises an
+    internal validation error even though the group name and occurrence paths
+    are still readable.  Tokens are provenance metadata, not connectivity
+    inputs, so preserve the failure explicitly and continue the export.
+    """
+
+    try:
+        return str(entity.entityToken)
+    except Exception as error:  # Fusion API raises several version-specific types.
+        return f"<unavailable:{type(error).__name__}>"
+
+
 def _body_bounds_mm(body) -> dict[str, list[float]]:
     bounds = body.boundingBox
     converted = [_webots_point_mm(bounds.minPoint), _webots_point_mm(bounds.maxPoint)]
@@ -256,7 +272,7 @@ def _joint_record(joint) -> dict[str, object]:
     occurrence_two = joint.occurrenceTwo
     record: dict[str, object] = {
         "name": joint.name,
-        "entity_token": joint.entityToken,
+        "entity_token": _entity_token(joint),
         "type": _joint_type_name(motion),
         "occurrence_one": occurrence_one.fullPathName if occurrence_one else "<root>",
         "occurrence_two": occurrence_two.fullPathName if occurrence_two else "<root>",
@@ -304,7 +320,7 @@ def _as_built_joint_record(joint) -> dict[str, object]:
     )
     record: dict[str, object] = {
         "name": joint.name,
-        "entity_token": joint.entityToken,
+        "entity_token": _entity_token(joint),
         "type": _joint_type_name(motion),
         "assembly_context": context.fullPathName if context else "<root>",
         "occurrence_one": _join_occurrence_path(context, occurrence_one),
@@ -346,7 +362,7 @@ def _joint_origin_record(origin) -> dict[str, object]:
     transform = origin.transform
     return {
         "name": origin.name,
-        "entity_token": origin.entityToken,
+        "entity_token": _entity_token(origin),
         "fusion_transform_cm": _fusion_matrix_cm(transform),
         "webots_transform_mm": _webots_matrix_mm(transform),
         "primary_axis_body_webots": _webots_vector(origin.primaryAxisVector),
@@ -359,7 +375,7 @@ def _rigid_group_record(group) -> dict[str, object]:
     context = getattr(group, "assemblyContext", None)
     return {
         "name": group.name,
-        "entity_token": group.entityToken,
+        "entity_token": _entity_token(group),
         "assembly_context": context.fullPathName if context else "<root>",
         "occurrences": sorted(occurrence.fullPathName for occurrence in group.occurrences),
     }
