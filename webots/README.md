@@ -34,7 +34,7 @@ mapping:
 
 | Simulator leg | CAD leg |
 | --- | --- |
-| `legi` | 1 |
+| `legi` | 7 |
 | `legj` | 2 |
 | `legn` | 3 |
 | `legl` | 4 |

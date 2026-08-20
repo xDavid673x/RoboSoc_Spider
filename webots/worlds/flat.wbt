@@ -41,4 +41,4 @@ Solid {
   boundingObject Box { size 4 0.1 4 }
   physics NULL
 }
-Spider { name "spider_flat" translation 0 0.051354353 0 rotation 0 1 0 0 }
+Spider { name "spider_flat" translation 0 0.112091246 0 rotation 0 1 0 0 }
