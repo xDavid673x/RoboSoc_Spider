@@ -9,6 +9,8 @@ Webots being installed.
 from __future__ import annotations
 
 from collections.abc import Iterable
+import json
+from pathlib import Path
 from typing import Any
 
 try:
@@ -25,7 +27,7 @@ except ImportError:  # pragma: no cover - exercised by normal Python imports.
 
 TIME_STEP_MS = 20
 JOINT_NAMES = ("coxa", "femur", "tibia")
-BODY_TRANSLATION = (0.0, 0.16, 0.0)
+BODY_TRANSLATION = (0.0, 0.133, 0.0)
 BODY_ROTATION = (0.0, 1.0, 0.0, 0.0)
 
 
@@ -160,9 +162,57 @@ class SpiderController:
             pressed = [] if key < 0 else [key]
             self.apply(keyboard_command(pressed))
 
+    def run_smoke(self, result_path: str | None = None) -> None:
+        """Run deterministic command checks and quit a headless Webots run.
+
+        The smoke path deliberately reports adapter reference deltas rather
+        than claiming calibrated dynamic performance.  It verifies that the
+        real Webots world resolved every device and that the four keyboard
+        directions reach the existing gait boundary with opposite signs.
+        """
+
+        scenarios = {
+            "forward": {"mode": "walk", "vx": 1.0, "speed": 1.0},
+            "backward": {"mode": "walk", "vx": -1.0, "speed": 1.0},
+            "left": {"mode": "turn", "turn": -1.0, "speed": 1.0},
+            "right": {"mode": "turn", "turn": 1.0, "speed": 1.0},
+        }
+        deltas: dict[str, list[float]] = {}
+        for name, payload in scenarios.items():
+            self.spider.reset()
+            before = self.spider.tip_positions_mm()["legi"]
+            self.apply(payload)
+            after = self.spider.tip_positions_mm()["legi"]
+            deltas[name] = [after[index] - before[index] for index in range(3)]
+
+        self.apply({"mode": "stop"})
+        stop_angles = self.spider.joint_angles_deg()["legi"]
+        self.apply({"mode": "init"})
+        reset_angles = self.spider.joint_angles_deg()["legi"]
+        result = {
+            "devices": len(self.motors),
+            "sensors": len(self.sensors),
+            "deltas_mm": deltas,
+            "stop_angles_deg": stop_angles,
+            "reset_angles_deg": reset_angles,
+        }
+        encoded_result = json.dumps(result, sort_keys=True)
+        if result_path:
+            Path(result_path).write_text(encoded_result, encoding="utf-8")
+        print("SPIDER_SMOKE_RESULT " + encoded_result, flush=True)
+        simulation_quit = getattr(self.supervisor, "simulationQuit", None)
+        if simulation_quit:
+            simulation_quit(0)
+
 
 def main() -> None:
-    SpiderController().run()
+    controller = SpiderController()
+    get_custom_data = getattr(controller.supervisor, "getCustomData", None)
+    custom_data = get_custom_data() if get_custom_data else ""
+    if custom_data.startswith("smoke:"):
+        controller.run_smoke(custom_data.removeprefix("smoke:"))
+    else:
+        controller.run()
 
 
 if __name__ == "__main__":

@@ -3,3 +3,4 @@ img/
 __pycache__/
 *.gif
 *.py[cod]
+webots/worlds/.*.wbproj

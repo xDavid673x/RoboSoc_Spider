@@ -3,9 +3,10 @@
 EXTERNPROTO "SpiderLeg.proto"
 
 PROTO Spider [
-  field SFVec3f translation 0 0.16 0
+  field SFVec3f translation 0 0.133 0
   field SFRotation rotation 0 0 1 0
   field SFString controller "spider_controller"
+  field SFString customData ""
   field SFString name "spider"
   field SFBool supervisor TRUE
   # Provisional values: replace after measured mass/inertia and actuator limits.
@@ -18,9 +19,12 @@ PROTO Spider [
     rotation IS rotation
     name IS name
     controller IS controller
+    customData IS customData
     supervisor IS supervisor
     children [
       Transform {
+        translation 0 -0.014 0
+        rotation 1 0 0 -1.570796
         scale 0.001 0.001 0.001
         children [
           Shape {
@@ -106,7 +110,7 @@ PROTO Spider [
         linkMass IS linkMass
       }
     ]
-    boundingObject Box { size 0.22 0.04 0.14 }
+    boundingObject Box { size 0.24 0.04 0.22 }
     physics Physics { density -1 mass IS bodyMass }
   }
 }

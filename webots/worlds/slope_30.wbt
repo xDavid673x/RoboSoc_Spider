@@ -3,7 +3,17 @@
 EXTERNPROTO "../protos/Spider.proto"
 EXTERNPROTO "../protos/SlopeTerrain.proto"
 
-WorldInfo { basicTimeStep 20 }
+WorldInfo {
+  basicTimeStep 20
+  contactProperties [
+    ContactProperties {
+      material1 "spider_foot"
+      material2 "ground"
+      coulombFriction [ 0.8 ]
+      bounce 0
+    }
+  ]
+}
 Viewpoint {
   position 1.4 1.2 1.0
   orientation -0.42 0.56 0.72 2.25

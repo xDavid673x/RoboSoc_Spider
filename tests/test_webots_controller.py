@@ -96,7 +96,7 @@ def test_reset_restores_body_physics_and_joint_pose():
 
     assert supervisor.physics_reset_count == 2
     assert supervisor.body.reset_count == 2
-    assert supervisor.body.fields["translation"].value == [0.0, 0.16, 0.0]
+    assert supervisor.body.fields["translation"].value == [0.0, 0.133, 0.0]
     assert supervisor.body.fields["rotation"].value == [0.0, 1.0, 0.0, 0.0]
     assert controller.spider.last_mode == "init"
     assert all(
