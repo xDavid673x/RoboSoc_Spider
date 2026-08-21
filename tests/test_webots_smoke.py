@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -282,9 +283,15 @@ def test_flat_world_physical_motion_stop_and_reset():
 
     left = results["left"]
     right = results["right"]
-    assert left["yaw_rad"] * right["yaw_rad"] < 0.0
-    assert abs(left["yaw_rad"]) > 0.1
-    assert abs(right["yaw_rad"]) > 0.1
+    assert left["yaw_rad"] > 0.5
+    assert right["yaw_rad"] < -0.5
+    assert abs(abs(left["yaw_rad"]) - abs(right["yaw_rad"])) < 0.1
+    for turn in (left, right):
+        horizontal_drift = math.hypot(
+            turn["displacement_m"][0],
+            turn["displacement_m"][2],
+        )
+        assert horizontal_drift < 0.01
 
     assert results["stop"]["stop_drift_m"] < 0.001
 

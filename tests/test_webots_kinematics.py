@@ -23,8 +23,23 @@ from webots.controllers.spider_controller.kinematics_adapter import (
     joint_angles_to_webots,
     load_cad_manifest,
     mm_to_m,
+    turn_gait_compensation_rad,
 )
 from servo2040_receiver.legs_IK import SERVO_OFFSETS
+
+
+def _ik_delta_to_body(leg_manifest, delta_ik):
+    # SpiderLeg uses X/Y as its horizontal plane and Z as vertical;
+    # Webots' leg frame uses X/Z horizontally and Y vertically.
+    delta_leg = [delta_ik[0], delta_ik[2], -delta_ik[1]]
+    transform = leg_manifest["leg_to_body_transform_mm"]
+    return [
+        sum(
+            transform[row * 4 + column] * delta_leg[column]
+            for column in range(3)
+        )
+        for row in range(3)
+    ]
 
 
 def test_length_and_angle_conversions_preserve_boundary_units():
@@ -230,23 +245,67 @@ def test_all_six_leg_strides_align_with_webots_negative_z():
             targets_end[name][index] - targets_start[name][index]
             for index in range(3)
         ]
-        # SpiderLeg uses X/Y as its horizontal plane and Z as vertical;
-        # Webots' leg frame uses X/Z horizontally and Y vertically.
-        delta_leg = [delta_ik[0], delta_ik[2], -delta_ik[1]]
-        transform = legs_by_name[name]["leg_to_body_transform_mm"]
-        delta_body = [
-            sum(
-                transform[row * 4 + column] * delta_leg[column]
-                for column in range(3)
-            )
-            for row in range(3)
-        ]
+        delta_body = _ik_delta_to_body(legs_by_name[name], delta_ik)
         expected_z = -100.0 if name in TRIPOD_A else 100.0
         assert delta_body == pytest.approx([0.0, 0.0, expected_z], abs=1e-6)
         if name in TRIPOD_A:
             assert targets_mid[name][2] > targets_start[name][2]
         else:
             assert targets_mid[name][2] == pytest.approx(targets_start[name][2])
+
+
+@pytest.mark.parametrize("turn", (-1.0, 1.0))
+def test_all_six_turn_strides_are_tangent_to_the_body(turn):
+    spider = VirtualSpider()
+    manifest = load_cad_manifest()
+    assert manifest is not None
+    legs_by_name = {leg["name"]: leg for leg in manifest["legs"]}
+    legs = list(spider.legs.values())
+    spider.gait.anti_beta_dict = {
+        name: turn_gait_compensation_rad(turn) for name in LEG_NAMES
+    }
+    path_angle_deg = -(10.0 + 30.0 * abs(turn)) * turn
+    targets_start = spider.gait.calculate_gait_targets(
+        legs,
+        TRIPOD_A,
+        [-50.0, -125.0],
+        [50.0, -125.0],
+        -125.0,
+        30.0,
+        20,
+        0,
+        path_angle_deg,
+        130.0,
+    )
+    targets_end = spider.gait.calculate_gait_targets(
+        legs,
+        TRIPOD_A,
+        [-50.0, -125.0],
+        [50.0, -125.0],
+        -125.0,
+        30.0,
+        20,
+        20,
+        path_angle_deg,
+        130.0,
+    )
+
+    for name in LEG_NAMES:
+        delta_ik = [
+            targets_end[name][index] - targets_start[name][index]
+            for index in range(3)
+        ]
+        delta_body = _ik_delta_to_body(legs_by_name[name], delta_ik)
+        radial = legs_by_name[name]["frame"]["x_axis"]
+        direction = 1.0 if turn < 0.0 else -1.0
+        if name in TRIPOD_B:
+            direction *= -1.0
+        expected = [
+            direction * 100.0 * radial[2],
+            0.0,
+            direction * -100.0 * radial[0],
+        ]
+        assert delta_body == pytest.approx(expected, abs=1e-6)
 
 
 def test_virtual_spider_creates_six_named_legs_with_three_joints_each():

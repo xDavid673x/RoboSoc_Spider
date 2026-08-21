@@ -144,6 +144,20 @@ def gait_step_for_speed(speed: float) -> int:
     return max(GAIT_STEP_MIN, min(GAIT_STEP_MAX, int(step)))
 
 
+def turn_gait_compensation_rad(turn: float) -> float:
+    """Align the legacy gait sweep with an in-place body turn.
+
+    ``turn_step`` rotates its path by the negative public turn angle.  Adding
+    that signed angle here cancels the path rotation for a left turn; a
+    further half-turn reverses every foot sweep for a right turn.  With the
+    radial CAD leg frames, those local sweeps become body-frame tangents.
+    """
+
+    normalized = clamp(turn, -1.0, 1.0)
+    turn_angle = math.radians((10.0 + 30.0 * abs(normalized)) * normalized)
+    return turn_angle + (math.pi if normalized > 0.0 else 0.0)
+
+
 def joint_angles_to_webots(angles_deg: Iterable[float]) -> list[float]:
     """Convert command-space degrees to Webots radians after limiting."""
 
@@ -266,11 +280,7 @@ class VirtualSpider:
 
         if command.mode == "turn":
             turn_angle = (10.0 + 30.0 * abs(command.turn)) * command.turn
-            compensation = (
-                math.pi - math.radians(turn_angle)
-                if command.turn > 0.0
-                else -math.radians(turn_angle)
-            )
+            compensation = turn_gait_compensation_rad(command.turn)
             self.gait.anti_beta_dict = {
                 name: compensation for name in LEG_NAMES
             }

@@ -66,6 +66,12 @@ its horizontal plane while Webots uses local X/Z. This keeps all three stance
 feet pushing along one body axis: `W` advances toward Webots negative Z (Fusion
 top-view positive Y), and `S` reverses that stride.
 
+For `A` and `D`, the adapter rotates those same alternating tripod sweeps onto
+the tangent of each radial leg frame. The stance tripod therefore supplies
+torque around the body centre while the swing tripod advances to the next
+support position, producing an in-place turn instead of pulling the feet
+inward or outward.
+
 The existing `SpiderLeg` and `Tripot_gait` classes remain the source of IK and
 gait behavior. They continue to operate in millimetres and degrees. The Webots
 adapter removes the physical servo offsets once, then converts motor commands
@@ -107,7 +113,8 @@ Webots in batch/fast mode. It loads all four worlds, resolves all 18 motors and
 sensors, checks each world's first physics step and configured reset transform,
 and checks the command path for forward/backward, left/right, stop, and reset.
 The flat-world motion check also rejects lateral drift above 20 percent of the
-forward stride or walk yaw above 0.1 radians.
+forward stride or walk yaw above 0.1 radians. Turn checks require opposite,
+near-symmetric yaw above 0.5 radians and less than 10 mm of horizontal drift.
 
 Each slope world rotates and translates the initial robot pose with the terrain.
 `R` restores that world-specific pose, while the joint reset remains
