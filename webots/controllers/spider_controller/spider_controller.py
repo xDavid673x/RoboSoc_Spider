@@ -30,6 +30,14 @@ TIME_STEP_MS = 20
 JOINT_NAMES = ("coxa", "femur", "tibia")
 BODY_TRANSLATION = (0.0, 0.133, 0.0)
 BODY_ROTATION = (0.0, 1.0, 0.0, 0.0)
+SMOKE_MOTION_COMMANDS = {
+    "forward": {"mode": "walk", "vx": 1.0, "speed": 1.0},
+    "backward": {"mode": "walk", "vx": -1.0, "speed": 1.0},
+    "strafe_left": {"mode": "walk", "vy": 1.0, "speed": 1.0},
+    "strafe_right": {"mode": "walk", "vy": -1.0, "speed": 1.0},
+    "turn_left": {"mode": "turn", "turn": -1.0, "speed": 1.0},
+    "turn_right": {"mode": "turn", "turn": 1.0, "speed": 1.0},
+}
 
 
 def _key_name(key: Any) -> str:
@@ -288,16 +296,8 @@ class SpiderController:
             key for key, sensor in self.sensors.items() if sensor is None
         )
 
-        scenarios = {
-            "forward": {"mode": "walk", "vx": 1.0, "speed": 1.0},
-            "backward": {"mode": "walk", "vx": -1.0, "speed": 1.0},
-            "strafe_left": {"mode": "walk", "vy": 1.0, "speed": 1.0},
-            "strafe_right": {"mode": "walk", "vy": -1.0, "speed": 1.0},
-            "turn_left": {"mode": "turn", "turn": -1.0, "speed": 1.0},
-            "turn_right": {"mode": "turn", "turn": 1.0, "speed": 1.0},
-        }
         deltas: dict[str, list[float]] = {}
-        for name, payload in scenarios.items():
+        for name, payload in SMOKE_MOTION_COMMANDS.items():
             self.spider.reset()
             before = self.spider.tip_positions_mm()["legi"]
             self.apply(payload)
@@ -349,22 +349,14 @@ class SpiderController:
     ) -> None:
         """Measure one isolated physical behavior in a fresh Webots process."""
 
-        scenarios = {
-            "forward": {"mode": "walk", "vx": 1.0, "speed": 1.0},
-            "backward": {"mode": "walk", "vx": -1.0, "speed": 1.0},
-            "strafe_left": {"mode": "walk", "vy": 1.0, "speed": 1.0},
-            "strafe_right": {"mode": "walk", "vy": -1.0, "speed": 1.0},
-            "turn_left": {"mode": "turn", "turn": -1.0, "speed": 1.0},
-            "turn_right": {"mode": "turn", "turn": 1.0, "speed": 1.0},
-        }
         self.reset()
         self._step_simulation(80, Command.stop())
 
         result: dict[str, Any] = {"scenario": scenario}
-        if scenario in scenarios:
+        if scenario in SMOKE_MOTION_COMMANDS:
             start_position, start_yaw = self._body_state()
             motion_steps = 80 if scenario.startswith("turn_") else 120
-            self._step_simulation(motion_steps, scenarios[scenario])
+            self._step_simulation(motion_steps, SMOKE_MOTION_COMMANDS[scenario])
             end_position, end_yaw = self._body_state()
             result.update(
                 {
@@ -378,7 +370,7 @@ class SpiderController:
                 }
             )
         elif scenario == "stop":
-            self._step_simulation(160, scenarios["forward"])
+            self._step_simulation(160, SMOKE_MOTION_COMMANDS["forward"])
             self._step_simulation(30, Command.stop())
             stop_start, _ = self._body_state()
             self._step_simulation(40, Command.stop())
@@ -391,7 +383,7 @@ class SpiderController:
                 }
             )
         elif scenario == "reset":
-            self._step_simulation(120, scenarios["forward"])
+            self._step_simulation(120, SMOKE_MOTION_COMMANDS["forward"])
             before_reset, _ = self._body_state()
             self.reset()
             self._step_simulation(1)
