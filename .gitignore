@@ -1,6 +1,9 @@
 img/
 .DS_Store
 __pycache__/
+/.codegraph/
+/AGENTS.md
+/old/
 *.gif
 !webots/assets/demos/spider-tripod-gait.gif
 *.py[cod]
