@@ -11,6 +11,8 @@ Open one of these worlds in Webots:
 - `worlds/slope_10.wbt`
 - `worlds/slope_20.wbt`
 - `worlds/slope_30.wbt`
+- `worlds/uneven_terrain_spider.wbt` (R2025a equivalent of the R2019a
+  `uneven_terrain.wbt` demo)
 
 Start the simulation, click the 3D view so it has keyboard focus, and use:
 
@@ -26,6 +28,20 @@ Start the simulation, click the 3D view so it has keyboard focus, and use:
 Turning takes precedence when a walk and turn key are held together. The
 worlds explicitly use Webots' `NUE` coordinate system: X and Z are horizontal,
 Y is up, and the initial forward direction is negative Z.
+
+The uneven-terrain world uses Webots' maintained `UnevenTerrain` PROTO in the
+`ENU` frame (X and Y are horizontal, Z is up), so the Spider instance is rotated
+into that frame. Its center is flat for a stable reset; moving away from the
+center reaches the seeded height field. The linked R2019a sample uses obsolete
+`ElevationGrid` fields and a six-wheel controller, so it should not be opened
+directly in R2025a.
+
+To launch it directly from macOS:
+
+```bash
+/Applications/Webots.app/Contents/MacOS/webots \
+  webots/worlds/uneven_terrain_spider.wbt
+```
 
 ## Model Boundary
 

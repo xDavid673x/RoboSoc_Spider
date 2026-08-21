@@ -1,0 +1,62 @@
+#VRML_SIM R2025a utf8
+
+# R2019a's uneven_terrain.wbt used a hand-authored ElevationGrid and a
+# six-wheel demo robot.  This R2025a world keeps the same terrain purpose but
+# uses the maintained UnevenTerrain PROTO and the repository Spider controller.
+EXTERNPROTO "../protos/Spider.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/UnevenTerrain.proto"
+
+WorldInfo {
+  coordinateSystem "ENU"
+  basicTimeStep 20
+  contactProperties [
+    ContactProperties {
+      material1 "spider_foot"
+      # UnevenTerrain keeps Solid's default contact material.
+      material2 "default"
+      coulombFriction [ 0.8 ]
+      bounce 0
+    }
+  ]
+}
+
+Viewpoint {
+  position 4 5 5
+  orientation 0.55 0.7 0.45 2.25
+  follow "spider_uneven_terrain"
+  followType "Tracking Shot"
+  followSmoothness 0.12
+}
+
+Background {
+  skyColor [ 0.35 0.48 0.62 ]
+}
+
+DirectionalLight {
+  direction -0.4 -0.8 -0.6
+  intensity 1.0
+  ambientIntensity 0.45
+  castShadows TRUE
+}
+
+# Flat center gives the robot a stable reset area; driving outward reaches
+# progressively rougher terrain generated from the fixed random seed.
+UnevenTerrain {
+  name "uneven terrain"
+  size 30 30 3
+  xDimension 61
+  yDimension 61
+  randomSeed 17
+  flatCenter TRUE
+  flatBounds TRUE
+}
+
+# Spider.proto is authored with +Y as up.  This X-axis rotation maps it into
+# the ENU world's +Z-up convention used by UnevenTerrain.
+Spider {
+  name "spider_uneven_terrain"
+  translation 0 0 0.112091246
+  rotation 1 0 0 1.570796327
+  controller "spider_controller"
+  supervisor TRUE
+}
