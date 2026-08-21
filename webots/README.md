@@ -3,6 +3,27 @@
 This project targets Webots R2025a on macOS. It is separate from the Servo
 2040 runtime and does not require the physical controller board.
 
+## Prerequisites
+
+- macOS with Webots R2025a installed (the default app path is
+  `/Applications/Webots.app`)
+- Python 3 with the repository test dependencies installed
+- A checkout opened from the repository root
+
+The simulator does not require a Servo 2040 board or hardware serial port.
+The village and uneven-terrain worlds load Webots R2025a external PROTOs, so
+the first launch may require network access.
+
+Launch any world directly from a terminal:
+
+```bash
+WEBOTS=/Applications/Webots.app/Contents/MacOS/webots
+"$WEBOTS" webots/worlds/flat.wbt
+```
+
+Replace `flat.wbt` with a world listed below. In the GUI, click the 3D view
+before using the keyboard so it receives focus.
+
 ## Run
 
 Open one of these worlds in Webots:
@@ -13,6 +34,8 @@ Open one of these worlds in Webots:
 - `worlds/slope_30.wbt`
 - `worlds/uneven_terrain_spider.wbt` (R2025a equivalent of the R2019a
   `uneven_terrain.wbt` demo)
+- `worlds/realistic_village_spider.wbt` (R2025a Realistic Village integration
+  scene)
 
 Start the simulation, click the 3D view so it has keyboard focus, and use:
 
@@ -124,8 +147,21 @@ Each slope world rotates and translates the initial robot pose with the terrain.
 `R` restores that world-specific pose, while the joint reset remains
 `[0, 28, 115]` degrees in every world.
 
+The automated smoke suite covers `flat.wbt` and the three slope worlds. Use the
+uneven-terrain and village worlds for interactive GUI checks; their external
+Webots PROTO dependencies are intentionally outside the deterministic four-world
+physics suite.
+
+If the spider appears not to respond, click the 3D view, press `Space` once,
+then press `R` to restore the world pose before trying `W`, `A`, `S`,
+`D`, `J`, or `K` again.
+
 ## Calibration Limits
 
+- The controller uses the committed CAD manifest when present, but currently
+  falls back to legacy provisional leg lengths and headings if that file is
+  missing. Treat a run without `webots/cad/spider_geometry.v1.json` as
+  unverified rather than as an exact CAD simulation.
 - The CAD attachment and reset-pose checks are geometric checks, not a claim
   that the current legacy gait is dynamically calibrated. The existing
   `SpiderLeg` gait uses its historical support pose, while the Fusion reset

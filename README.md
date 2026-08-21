@@ -1,10 +1,57 @@
 # Hexapod Web Control Quick Start
 
-## Webots Simulator
+## Webots Spider Simulator
 
-The standalone six-leg Webots R2025a project, keyboard controls, slope worlds,
-provisional dynamics, and verification instructions are documented in
-[`webots/README.md`](webots/README.md).
+The standalone six-leg Webots R2025a simulator runs without a Servo 2040 board.
+It provides CAD-derived leg geometry, flat and sloped validation worlds, and
+keyboard control. The detailed model and calibration notes are in
+[webots/README.md](webots/README.md).
+
+### Start on macOS
+
+Install Webots R2025a, then run these commands from the repository root:
+
+```bash
+WEBOTS=/Applications/Webots.app/Contents/MacOS/webots
+"$WEBOTS" webots/worlds/flat.wbt
+```
+
+Choose another world by replacing the filename:
+
+| World | Purpose |
+| --- | --- |
+| `flat.wbt` | Flat-ground motion and physics smoke test |
+| `slope_10.wbt`, `slope_20.wbt`, `slope_30.wbt` | 10°, 20°, and 30° slope checks |
+| `uneven_terrain_spider.wbt` | R2025a uneven-terrain integration scene |
+| `realistic_village_spider.wbt` | Realistic Village visual/integration scene |
+
+Click the 3D view to give it keyboard focus:
+
+| Key | Action |
+| --- | --- |
+| `W` / `S` | Forward / backward |
+| `A` / `D` | Parallel left / right |
+| `J` / `K` | In-place left / right turn |
+| `Space` | Stop and hold the initial stance |
+| `R` | Restore the world pose, joints, gait phase, and physics |
+
+`W`/`S` can be combined with `A`/`D` for diagonal translation. `J`/`K` take
+precedence when held with a translation key.
+
+### Validate the simulator
+
+Run the generated-geometry check and the full Python/Webots test suite from the
+repository root:
+
+```bash
+python3 tools/cad_sync.py check-generated
+python3 -m pytest -q
+```
+
+The flat and slope worlds are the canonical headless smoke-test targets.
+The uneven-terrain and village scenes use Webots R2025a external resources and
+are intended for interactive integration checks.
+
 
 Shared UI source (used by both internet and LAN modes):
 - `shared_ui/index.html`
@@ -28,17 +75,25 @@ Use the detected device path in the commands below.
 
 ### Health / DB init check
 Open:
-[init_db.php](https://web.cs.manchester.ac.uk/c59506kl/hexapod_robot/web_hosting/init_db.php?api_token=97af9d5e3b1287eb4b1f1266820f9dbaaf49f57c137e9c30ac339952217e4582)
+[init_db.php](https://web.cs.manchester.ac.uk/c59506kl/hexapod_robot/web_hosting/init_db.php)
 
 ### Controller URL
 Open:
 [web controller](https://web.cs.manchester.ac.uk/c59506kl/hexapod_robot/web_hosting/)
 
 ### Pi (or machine with servo connected) receiver
+
+Set the token in the environment; do not put the secret in this command or in
+the repository:
+
+```bash
+export HEXAPOD_API_TOKEN='replace-with-your-token'
+```
+
 ```bash
 python3 web_controller/pi_remote_client.py \
   --endpoint "https://web.cs.manchester.ac.uk/c59506kl/hexapod_robot/web_hosting/get_command.php" \
-  --token "97af9d5e3b1287eb4b1f1266820f9dbaaf49f57c137e9c30ac339952217e4582" \
+  --token "$HEXAPOD_API_TOKEN" \
   --poll-hz 40 \
   --http-timeout-s 0.4 \
   --stale-timeout-s 1.5 \
@@ -86,6 +141,9 @@ Then open:
 
 - Do not commit real API tokens/passwords into public repos.
 - Keep `web_hosting/config.php` secret in production.
+- Export `HEXAPOD_API_TOKEN` in your shell before using the remote receiver.
+- The credentials currently present in `web_hosting/config.php` must be revoked
+  and rotated; keep that deployment-only file out of public history.
 
 ## Logging Modes
 
@@ -100,7 +158,7 @@ Create env file (store token safely):
 ```bash
 sudo tee /etc/hexapod_remote.env >/dev/null <<'EOF'
 ENDPOINT=https://web.cs.manchester.ac.uk/c59506kl/hexapod_robot/web_hosting/get_command.php
-API_TOKEN=97af9d5e3b1287eb4b1f1266820f9dbaaf49f57c137e9c30ac339952217e4582
+API_TOKEN=replace-with-your-token
 SERIAL_PORT=/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_e6617c93e39c662b-if00
 EOF
 sudo chmod 600 /etc/hexapod_remote.env
