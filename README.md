@@ -7,6 +7,13 @@ It provides CAD-derived leg geometry, flat and sloped validation worlds, and
 keyboard control. The detailed model and calibration notes are in
 [webots/README.md](webots/README.md).
 
+### Demonstration
+
+![Webots spider tripod gait demonstration](webots/assets/demos/spider-tripod-gait.gif)
+
+*Top-down Webots demonstration of the spider's tripod gait moving across uneven
+terrain.*
+
 ### Start on macOS
 
 Install Webots R2025a, then run these commands from the repository root:

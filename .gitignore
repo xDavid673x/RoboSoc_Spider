@@ -2,6 +2,7 @@ img/
 .DS_Store
 __pycache__/
 *.gif
+!webots/assets/demos/spider-tripod-gait.gif
 *.py[cod]
 webots/worlds/.*.wbproj
 webots/cad/.staging/

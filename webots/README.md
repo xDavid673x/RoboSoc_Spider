@@ -14,6 +14,13 @@ The simulator does not require a Servo 2040 board or hardware serial port.
 The village and uneven-terrain worlds load Webots R2025a external PROTOs, so
 the first launch may require network access.
 
+## Demonstration
+
+![Webots spider tripod gait demonstration](assets/demos/spider-tripod-gait.gif)
+
+*Top-down Webots demonstration of the spider's tripod gait moving across uneven
+terrain.*
+
 Launch any world directly from a terminal:
 
 ```bash
