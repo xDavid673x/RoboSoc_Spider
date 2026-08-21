@@ -20,12 +20,15 @@ Start the simulation, click the 3D view so it has keyboard focus, and use:
 | --- | --- |
 | `W` | Walk forward |
 | `S` | Walk backward |
-| `A` | Turn left |
-| `D` | Turn right |
+| `A` | Move left without turning |
+| `D` | Move right without turning |
+| `J` | Turn left in place |
+| `K` | Turn right in place |
 | `Space` | Stop and hold the init stance |
 | `R` | Reset body, joints, gait phase, and physics |
 
-Turning takes precedence when a walk and turn key are held together. The
+`W`/`S` can be combined with `A`/`D` for diagonal translation. Turning takes
+precedence when a translation and turn key are held together. The
 worlds explicitly use Webots' `NUE` coordinate system: X and Z are horizontal,
 Y is up, and the initial forward direction is negative Z.
 
@@ -66,7 +69,7 @@ its horizontal plane while Webots uses local X/Z. This keeps all three stance
 feet pushing along one body axis: `W` advances toward Webots negative Z (Fusion
 top-view positive Y), and `S` reverses that stride.
 
-For `A` and `D`, the adapter rotates those same alternating tripod sweeps onto
+For `J` and `K`, the adapter rotates those same alternating tripod sweeps onto
 the tangent of each radial leg frame. The stance tripod therefore supplies
 torque around the body centre while the swing tripod advances to the next
 support position, producing an in-place turn instead of pulling the feet
@@ -111,7 +114,8 @@ snapshot and enforces the 0.01 mm / 0.01 degree frame tolerance. It covers all
 and the reset-zero transform for every joint. The native smoke suite starts
 Webots in batch/fast mode. It loads all four worlds, resolves all 18 motors and
 sensors, checks each world's first physics step and configured reset transform,
-and checks the command path for forward/backward, left/right, stop, and reset.
+and checks the command path for forward/backward, left/right strafing, in-place
+turning, stop, and reset.
 The flat-world motion check also rejects lateral drift above 20 percent of the
 forward stride or walk yaw above 0.1 radians. Turn checks require opposite,
 near-symmetric yaw above 0.5 radians and less than 10 mm of horizontal drift.

@@ -254,6 +254,51 @@ def test_all_six_leg_strides_align_with_webots_negative_z():
             assert targets_mid[name][2] == pytest.approx(targets_start[name][2])
 
 
+@pytest.mark.parametrize(
+    ("command_angle_deg", "swing_x_mm"),
+    ((90.0, -100.0), (-90.0, 100.0)),
+)
+def test_all_six_strafe_strides_are_parallel(command_angle_deg, swing_x_mm):
+    spider = VirtualSpider()
+    manifest = load_cad_manifest()
+    assert manifest is not None
+    legs_by_name = {leg["name"]: leg for leg in manifest["legs"]}
+    legs = list(spider.legs.values())
+    targets_start = spider.gait.calculate_gait_targets(
+        legs,
+        TRIPOD_A,
+        [-50.0, -125.0],
+        [50.0, -125.0],
+        -125.0,
+        30.0,
+        20,
+        0,
+        command_angle_deg,
+        130.0,
+    )
+    targets_end = spider.gait.calculate_gait_targets(
+        legs,
+        TRIPOD_A,
+        [-50.0, -125.0],
+        [50.0, -125.0],
+        -125.0,
+        30.0,
+        20,
+        20,
+        command_angle_deg,
+        130.0,
+    )
+
+    for name in LEG_NAMES:
+        delta_ik = [
+            targets_end[name][index] - targets_start[name][index]
+            for index in range(3)
+        ]
+        delta_body = _ik_delta_to_body(legs_by_name[name], delta_ik)
+        expected_x = swing_x_mm if name in TRIPOD_A else -swing_x_mm
+        assert delta_body == pytest.approx([expected_x, 0.0, 0.0], abs=1e-6)
+
+
 @pytest.mark.parametrize("turn", (-1.0, 1.0))
 def test_all_six_turn_strides_are_tangent_to_the_body(turn):
     spider = VirtualSpider()

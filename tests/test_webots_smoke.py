@@ -218,10 +218,13 @@ def test_all_worlds_load_with_all_devices_and_command_directions():
     for result in results:
         forward = result["deltas_mm"]["forward"]
         backward = result["deltas_mm"]["backward"]
-        left = result["deltas_mm"]["left"]
-        right = result["deltas_mm"]["right"]
+        strafe_left = result["deltas_mm"]["strafe_left"]
+        strafe_right = result["deltas_mm"]["strafe_right"]
+        turn_left = result["deltas_mm"]["turn_left"]
+        turn_right = result["deltas_mm"]["turn_right"]
         assert forward[1] * backward[1] < 0
-        assert left[1] * right[1] < 0
+        assert strafe_left[0] * strafe_right[0] < 0
+        assert turn_left[1] * turn_right[1] < 0
 
 
 @pytest.mark.skipif(not WEBOTS.exists(), reason="Webots R2025a is not installed")
@@ -254,8 +257,10 @@ def test_flat_world_physical_motion_stop_and_reset():
             "stand",
             "forward",
             "backward",
-            "left",
-            "right",
+            "strafe_left",
+            "strafe_right",
+            "turn_left",
+            "turn_right",
             "stop",
             "reset",
         )
@@ -281,12 +286,25 @@ def test_flat_world_physical_motion_stop_and_reset():
     assert abs(results["forward"]["yaw_rad"]) < 0.1
     assert abs(results["backward"]["yaw_rad"]) < 0.1
 
-    left = results["left"]
-    right = results["right"]
-    assert left["yaw_rad"] > 0.5
-    assert right["yaw_rad"] < -0.5
-    assert abs(abs(left["yaw_rad"]) - abs(right["yaw_rad"])) < 0.1
-    for turn in (left, right):
+    strafe_left = results["strafe_left"]
+    strafe_right = results["strafe_right"]
+    assert strafe_left["displacement_m"][0] < -0.1
+    assert strafe_right["displacement_m"][0] > 0.1
+    assert abs(strafe_left["displacement_m"][2]) < abs(
+        strafe_left["displacement_m"][0]
+    ) * 0.2
+    assert abs(strafe_right["displacement_m"][2]) < abs(
+        strafe_right["displacement_m"][0]
+    ) * 0.2
+    assert abs(strafe_left["yaw_rad"]) < 0.1
+    assert abs(strafe_right["yaw_rad"]) < 0.1
+
+    turn_left = results["turn_left"]
+    turn_right = results["turn_right"]
+    assert turn_left["yaw_rad"] > 0.5
+    assert turn_right["yaw_rad"] < -0.5
+    assert abs(abs(turn_left["yaw_rad"]) - abs(turn_right["yaw_rad"])) < 0.1
+    for turn in (turn_left, turn_right):
         horizontal_drift = math.hypot(
             turn["displacement_m"][0],
             turn["displacement_m"][2],

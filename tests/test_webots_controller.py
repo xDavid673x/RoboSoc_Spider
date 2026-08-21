@@ -90,14 +90,21 @@ class FakeSupervisor:
         self.physics_reset_count += 1
 
 
-def test_keyboard_reducer_prioritizes_reset_then_stop_then_turn_then_walk():
+def test_keyboard_reducer_maps_translation_and_prioritizes_jk_turning():
     assert keyboard_command(["w", "r"]).mode == "init"
     assert keyboard_command(["w", " "]).mode == "stand"
-    command = keyboard_command(["w", "a"])
+    command = keyboard_command(["w", "j"])
     assert command.mode == "turn"
     assert command.turn == -1.0
+    assert keyboard_command(["k"]).turn == 1.0
     assert keyboard_command(["w"]).vx == 1.0
     assert keyboard_command(["s"]).vx == -1.0
+    assert keyboard_command(["a"]).vy == 1.0
+    assert keyboard_command(["d"]).vy == -1.0
+
+    diagonal = keyboard_command(["w", "a"])
+    assert diagonal.mode == "walk"
+    assert (diagonal.vx, diagonal.vy, diagonal.speed) == (1.0, 1.0, 1.0)
 
 
 def test_controller_looks_up_all_devices_and_enables_sensors():

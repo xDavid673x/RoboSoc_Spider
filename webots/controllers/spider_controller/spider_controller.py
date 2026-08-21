@@ -48,9 +48,10 @@ def _key_name(key: Any) -> str:
 def keyboard_command(keys: Iterable[Any]) -> Command:
     """Reduce currently pressed keys to one normalized gait command.
 
-    ``W``/``S`` drive forward/backward and ``A``/``D`` turn left/right.
-    Turning has precedence over walking when both are held.  Space holds the
-    standing pose and ``R`` requests a full reset.
+    ``W``/``S`` drive forward/backward, ``A``/``D`` strafe left/right, and
+    ``J``/``K`` turn left/right. Turning has precedence over translation when
+    both are held. Space holds the standing pose and ``R`` requests a full
+    reset.
     """
 
     pressed = {_key_name(key) for key in keys}
@@ -59,13 +60,14 @@ def keyboard_command(keys: Iterable[Any]) -> Command:
     if " " in pressed or "space" in pressed:
         return Command(mode="stand")
 
-    turn = float("d" in pressed) - float("a" in pressed)
+    turn = float("k" in pressed) - float("j" in pressed)
     if turn:
         return Command(mode="turn", turn=turn, speed=1.0)
 
     vx = float("w" in pressed) - float("s" in pressed)
-    if vx:
-        return Command(mode="walk", vx=vx, speed=1.0)
+    vy = float("a" in pressed) - float("d" in pressed)
+    if vx or vy:
+        return Command(mode="walk", vx=vx, vy=vy, speed=1.0)
     return Command.stop()
 
 
@@ -270,8 +272,8 @@ class SpiderController:
 
         The smoke path deliberately reports adapter reference deltas rather
         than claiming calibrated dynamic performance.  It verifies that the
-        real Webots world resolved every device and that the four keyboard
-        directions reach the existing gait boundary with opposite signs.
+        real Webots world resolved every device and that translation and turn
+        command pairs reach the gait boundary with opposite signs.
         """
 
         initial_body_position, initial_body_yaw = self._body_state()
@@ -289,8 +291,10 @@ class SpiderController:
         scenarios = {
             "forward": {"mode": "walk", "vx": 1.0, "speed": 1.0},
             "backward": {"mode": "walk", "vx": -1.0, "speed": 1.0},
-            "left": {"mode": "turn", "turn": -1.0, "speed": 1.0},
-            "right": {"mode": "turn", "turn": 1.0, "speed": 1.0},
+            "strafe_left": {"mode": "walk", "vy": 1.0, "speed": 1.0},
+            "strafe_right": {"mode": "walk", "vy": -1.0, "speed": 1.0},
+            "turn_left": {"mode": "turn", "turn": -1.0, "speed": 1.0},
+            "turn_right": {"mode": "turn", "turn": 1.0, "speed": 1.0},
         }
         deltas: dict[str, list[float]] = {}
         for name, payload in scenarios.items():
@@ -348,8 +352,10 @@ class SpiderController:
         scenarios = {
             "forward": {"mode": "walk", "vx": 1.0, "speed": 1.0},
             "backward": {"mode": "walk", "vx": -1.0, "speed": 1.0},
-            "left": {"mode": "turn", "turn": -1.0, "speed": 1.0},
-            "right": {"mode": "turn", "turn": 1.0, "speed": 1.0},
+            "strafe_left": {"mode": "walk", "vy": 1.0, "speed": 1.0},
+            "strafe_right": {"mode": "walk", "vy": -1.0, "speed": 1.0},
+            "turn_left": {"mode": "turn", "turn": -1.0, "speed": 1.0},
+            "turn_right": {"mode": "turn", "turn": 1.0, "speed": 1.0},
         }
         self.reset()
         self._step_simulation(80, Command.stop())
@@ -357,7 +363,7 @@ class SpiderController:
         result: dict[str, Any] = {"scenario": scenario}
         if scenario in scenarios:
             start_position, start_yaw = self._body_state()
-            motion_steps = 80 if scenario in {"left", "right"} else 120
+            motion_steps = 80 if scenario.startswith("turn_") else 120
             self._step_simulation(motion_steps, scenarios[scenario])
             end_position, end_yaw = self._body_state()
             result.update(
