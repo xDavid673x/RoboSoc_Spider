@@ -21,6 +21,7 @@ from webots.controllers.spider_controller.kinematics_adapter import (
     deg_to_rad,
     gait_step_for_speed,
     joint_angles_to_webots,
+    load_cad_manifest,
     mm_to_m,
 )
 from servo2040_receiver.legs_IK import SERVO_OFFSETS
@@ -168,17 +169,84 @@ def test_webots_mount_compensation_and_gait_rate_match_the_body_frame():
     assert spider.gait.anti_beta_dict == pytest.approx(
         {
             "legi": 0.0,
-            "legj": math.pi / 3.0,
-            "legk": 2.0 * math.pi / 3.0,
-            "legl": -math.pi,
-            "legm": -2.0 * math.pi / 3.0,
-            "legn": -math.pi / 3.0,
+            "legj": -math.pi / 3.0,
+            "legk": -2.0 * math.pi / 3.0,
+            "legl": math.pi,
+            "legm": 2.0 * math.pi / 3.0,
+            "legn": math.pi / 3.0,
         }
     )
     assert WEBOTS_GAIT_COMPENSATION_RAD == spider.gait.anti_beta_dict
     assert gait_step_for_speed(0.0) == 48
     assert gait_step_for_speed(0.7) == 28
     assert gait_step_for_speed(1.0) == 20
+
+
+def test_all_six_leg_strides_align_with_webots_negative_z():
+    spider = VirtualSpider()
+    manifest = load_cad_manifest()
+    assert manifest is not None
+    legs_by_name = {leg["name"]: leg for leg in manifest["legs"]}
+    legs = list(spider.legs.values())
+    targets_start = spider.gait.calculate_gait_targets(
+        legs,
+        TRIPOD_A,
+        [-50.0, -125.0],
+        [50.0, -125.0],
+        -125.0,
+        30.0,
+        20,
+        0,
+        0.0,
+        130.0,
+    )
+    targets_mid = spider.gait.calculate_gait_targets(
+        legs,
+        TRIPOD_A,
+        [-50.0, -125.0],
+        [50.0, -125.0],
+        -125.0,
+        30.0,
+        20,
+        10,
+        0.0,
+        130.0,
+    )
+    targets_end = spider.gait.calculate_gait_targets(
+        legs,
+        TRIPOD_A,
+        [-50.0, -125.0],
+        [50.0, -125.0],
+        -125.0,
+        30.0,
+        20,
+        20,
+        0.0,
+        130.0,
+    )
+
+    for name in LEG_NAMES:
+        delta_ik = [
+            targets_end[name][index] - targets_start[name][index]
+            for index in range(3)
+        ]
+        # SpiderLeg uses X/Y as its horizontal plane and Z as vertical;
+        # Webots' leg frame uses X/Z horizontally and Y vertically.
+        delta_leg = [delta_ik[0], delta_ik[2], -delta_ik[1]]
+        transform = legs_by_name[name]["leg_to_body_transform_mm"]
+        delta_body = [
+            sum(
+                transform[row * 4 + column] * delta_leg[column]
+                for column in range(3)
+            )
+            for row in range(3)
+        ]
+        expected_z = -100.0 if name in TRIPOD_A else 100.0
+        assert delta_body == pytest.approx([0.0, 0.0, expected_z], abs=1e-6)
+        if name in TRIPOD_A:
+            assert targets_mid[name][2] > targets_start[name][2]
+        else:
+            assert targets_mid[name][2] == pytest.approx(targets_start[name][2])
 
 
 def test_virtual_spider_creates_six_named_legs_with_three_joints_each():

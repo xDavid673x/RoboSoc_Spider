@@ -722,6 +722,10 @@ def derive_manifest(
             lowest_y = min(corner[1] for corner in tibia_corners)
             lowest = [corner for corner in tibia_corners if math.isclose(corner[1], lowest_y, abs_tol=1e-9)]
             foot_contact = max(lowest, key=lambda corner: _dot(_sub(corner, leg_origin_body), frame["x_axis"]))
+        gait_heading = round(
+            math.atan2(frame["x_axis"][2], frame["x_axis"][0]),
+            9,
+        )
         legs.append(
             {
                 "name": leg_name,
@@ -730,8 +734,11 @@ def derive_manifest(
                 "frame": frame,
                 "leg_to_body_transform_mm": _flat_from_matrix(leg_to_body),
                 "command_signs": command_signs,
-                "gait_heading_rad": round(math.atan2(frame["x_axis"][2], frame["x_axis"][0]), 9),
-                "gait_compensation_rad": round(-math.atan2(frame["x_axis"][2], frame["x_axis"][0]), 9),
+                "gait_heading_rad": gait_heading,
+                # SpiderLeg's local +Y is Webots local -Z.  Applying the
+                # frame heading (not its geometric inverse) makes every
+                # leg's local stride parallel in the Webots body frame.
+                "gait_compensation_rad": gait_heading,
                 "lengths_mm": lengths,
                 "planar_fit_residual_mm": planar_residual_mm,
                 "planar_fit_residual_deg": planar_residual_deg,
@@ -808,6 +815,15 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
     for leg in legs:
         _require(set(leg.get("groups", {})) == {"mount", "coxa", "femur", "tibia"}, f"{leg.get('name')} group set is incomplete")
         _require(len(leg.get("joints", [])) == 3, f"{leg.get('name')} must have three joints")
+        _require(
+            math.isclose(
+                float(leg.get("gait_compensation_rad", math.inf)),
+                float(leg.get("gait_heading_rad", -math.inf)),
+                rel_tol=0.0,
+                abs_tol=1e-9,
+            ),
+            f"{leg.get('name')} gait compensation does not match the SpiderLeg/Webots frame mapping",
+        )
         for joint in leg["joints"]:
             role = joint["role"]
             _require(role in JOINT_ORDER, f"{leg['name']} has an unknown joint role: {role}")

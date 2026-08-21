@@ -61,6 +61,11 @@ Tripod A is `legi`, `legk`, and `legm`. Tripod B is `legj`, `legl`, and
 `legn`. Each leg has coxa and femur limits of -90 to +90 degrees and a tibia
 limit of 0 to 130 degrees.
 
+The CAD-derived gait compensation accounts for `SpiderLeg` using local X/Y as
+its horizontal plane while Webots uses local X/Z. This keeps all three stance
+feet pushing along one body axis: `W` advances toward Webots negative Z (Fusion
+top-view positive Y), and `S` reverses that stride.
+
 The existing `SpiderLeg` and `Tripot_gait` classes remain the source of IK and
 gait behavior. They continue to operate in millimetres and degrees. The Webots
 adapter removes the physical servo offsets once, then converts motor commands
@@ -101,6 +106,8 @@ and the reset-zero transform for every joint. The native smoke suite starts
 Webots in batch/fast mode. It loads all four worlds, resolves all 18 motors and
 sensors, checks each world's first physics step and configured reset transform,
 and checks the command path for forward/backward, left/right, stop, and reset.
+The flat-world motion check also rejects lateral drift above 20 percent of the
+forward stride or walk yaw above 0.1 radians.
 
 Each slope world rotates and translates the initial robot pose with the terrain.
 `R` restores that world-specific pose, while the joint reset remains

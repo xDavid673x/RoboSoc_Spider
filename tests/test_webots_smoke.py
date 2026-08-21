@@ -269,10 +269,16 @@ def test_flat_world_physical_motion_stop_and_reset():
     backward = results["backward"]["displacement_m"]
     # The CAD reset stance and the legacy gait support pose are not yet
     # dynamically calibrated.  Require a real, opposite-direction response;
-    # absolute stride distance remains a calibration measurement.
-    assert abs(forward[2]) > 0.0001
-    assert abs(backward[2]) > 0.0001
+    # absolute stride distance remains a calibration measurement.  The Fusion
+    # top-view arrow points along Fusion +Y, which is Webots -Z after the CAD
+    # conversion.
+    assert forward[2] < -0.1
+    assert backward[2] > 0.1
     assert forward[2] * backward[2] < 0.0
+    assert abs(forward[0]) < abs(forward[2]) * 0.2
+    assert abs(backward[0]) < abs(backward[2]) * 0.2
+    assert abs(results["forward"]["yaw_rad"]) < 0.1
+    assert abs(results["backward"]["yaw_rad"]) < 0.1
 
     left = results["left"]
     right = results["right"]

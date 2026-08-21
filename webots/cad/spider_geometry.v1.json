@@ -12906,7 +12906,7 @@
           1.0
         ]
       },
-      "gait_compensation_rad": -0.0,
+      "gait_compensation_rad": 0.0,
       "gait_heading_rad": 0.0,
       "groups": {
         "coxa": {
@@ -14539,7 +14539,7 @@
           0.5
         ]
       },
-      "gait_compensation_rad": 1.047197551,
+      "gait_compensation_rad": -1.047197551,
       "gait_heading_rad": -1.047197551,
       "groups": {
         "coxa": {
@@ -16172,7 +16172,7 @@
           -0.5
         ]
       },
-      "gait_compensation_rad": 2.094395102,
+      "gait_compensation_rad": -2.094395102,
       "gait_heading_rad": -2.094395102,
       "groups": {
         "coxa": {
@@ -17805,7 +17805,7 @@
           -1.0
         ]
       },
-      "gait_compensation_rad": -3.141592654,
+      "gait_compensation_rad": 3.141592654,
       "gait_heading_rad": 3.141592654,
       "groups": {
         "coxa": {
@@ -19438,7 +19438,7 @@
           -0.5
         ]
       },
-      "gait_compensation_rad": -2.094395102,
+      "gait_compensation_rad": 2.094395102,
       "gait_heading_rad": 2.094395102,
       "groups": {
         "coxa": {
@@ -21071,7 +21071,7 @@
           0.5
         ]
       },
-      "gait_compensation_rad": -1.047197551,
+      "gait_compensation_rad": 1.047197551,
       "gait_heading_rad": 1.047197551,
       "groups": {
         "coxa": {
